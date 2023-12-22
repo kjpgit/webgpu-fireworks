@@ -1,4 +1,3 @@
-# WebGPU Fireworks Demo
 
 ## Building
 
