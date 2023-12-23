@@ -30,3 +30,8 @@ export function RandomUniformUnitVector(): Vector3 {
     const z = Math.sqrt(1.0 - r*r) * hemisphere
     return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
 }
+
+export function smoothstep (min:number, max:number, value:number) {
+  var x = Math.max(0, Math.min(1, (value-min)/(max-min)));
+  return x*x*(3 - 2*x);
+}

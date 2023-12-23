@@ -1,5 +1,5 @@
 import { BufferWrapper, Vector3, Color4  } from "./buffer.js";
-import { RandomUniformUnitVector, random_range } from "./math.js";
+import { RandomUniformUnitVector, smoothstep, random_range } from "./math.js";
 
 
 const VELOCITY = 0.3
@@ -70,8 +70,9 @@ class Flare {
         // Linear fade out is fine.  Note we can start with a > 1.0,
         // so it actually appears exponential.
         let ret = this.color.clone()
-        let percent = secs / this.duration_secs
-        ret.a *= (1 - percent)
+        let percent = secs / this.duration_secs  // 0 - 1
+        let factor = smoothstep(0, 1, 1-percent)
+        ret.a *= factor
         return ret
     }
 }
@@ -126,10 +127,10 @@ class Firework {
             color.r += random_range(-0.3, 0.3)
             color.b += random_range(-0.3, 0.3)
             color.g += random_range(-0.3, 0.3)
-            color.a = random_range(0.7, 4.0)
+            //color.a = random_range(0.7, 4.0)
 
             // other variance
-            let duration_secs = 2.0; //random_range(0.5, 3.0)
+            let duration_secs = random_range(1.0, 4.0)
             let trail_secs = 0.5; //random_range(0.3, 0.7)
             const size = random_range(0.003, 0.005)
 
@@ -191,7 +192,11 @@ class Firework {
             return
         }
         let plume_secs = 0
-        let size = flare.size
+
+        let percent = secs / this.duration_secs  // 0 - 1
+        let factor = smoothstep(0, 1, percent)
+
+        let size = flare.size * (factor)
 
         let end_pos = flare.pointAtTime(l_secs, this.pos)
         let orig_color = flare.colorAtTime(l_secs)
@@ -225,8 +230,10 @@ class Firework {
             b.append_raw(1.0)
             b.append_raw_color4(color)
 
-            size *= 0.99
-            color.a = orig_color.a * ((1/(plume_secs+1) + 0.1))
+            // todo: make point smaller at end
+
+            size *= 0.95
+            color.a *= 0.9;
 
             end_pos = start_pos;
 
