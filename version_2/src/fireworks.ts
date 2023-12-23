@@ -192,11 +192,10 @@ class Firework {
             return
         }
         let plume_secs = 0
+        let size = flare.size;
 
-        let percent = secs / this.duration_secs  // 0 - 1
-        let factor = smoothstep(0, 1, percent)
+        let SHRINK_SECS=1
 
-        let size = flare.size * (factor)
 
         let end_pos = flare.pointAtTime(l_secs, this.pos)
         let orig_color = flare.colorAtTime(l_secs)
