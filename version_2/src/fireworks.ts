@@ -94,7 +94,7 @@ class Firework {
 
         this.pos = new Vector3(pos_x, pos_y, pos_z)
         this.type = Math.floor(random_range(0, 2))
-        //this.type = 1;
+        this.type = 1;
         this.start_time = time
         this.m_flares = new Array()
         this.add_flares(aspect_x)
@@ -181,6 +181,8 @@ class Firework {
 
     private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper)
     {
+        let b = buffer;
+
         // If this is too small, flickering happens when the dots move
         let PLUME_STEP_SECS = 0.02
 
@@ -188,26 +190,45 @@ class Firework {
         if (l_secs > flare.duration_secs) {
             return
         }
-        let color = flare.colorAtTime(l_secs)
         let plume_secs = 0
         let size = flare.size
-        let first = true
+
+        let end_pos = flare.pointAtTime(l_secs, this.pos)
 
         while (true) {
-            let p = flare.pointAtTime(l_secs, this.pos)
-            draw_triangle_2d(buffer, p, size, size, color)
-            if (first) {
-                draw_triangle_2d(buffer, p, size, -size, color)
-                first = false
-            }
+            let color = flare.colorAtTime(l_secs)
 
-            size *= 0.95
-            color.a *= 0.90
             l_secs -= PLUME_STEP_SECS
             plume_secs += PLUME_STEP_SECS
             if (l_secs < 0 || plume_secs > flare.trail_secs) {
                 return
             }
+
+            let start_pos = flare.pointAtTime(l_secs, this.pos)
+
+            b.append_raw(start_pos.x - size)
+            b.append_raw(start_pos.y)
+            b.append_raw(start_pos.z)
+            b.append_raw(1.0)
+            b.append_raw_color4(color)
+
+            b.append_raw(start_pos.x + size)
+            b.append_raw(start_pos.y)
+            b.append_raw(start_pos.z)
+            b.append_raw(1.0)
+            b.append_raw_color4(color)
+
+            // dest point
+            b.append_raw(end_pos.x)
+            b.append_raw(end_pos.y)
+            b.append_raw(end_pos.z)
+            b.append_raw(1.0)
+            b.append_raw_color4(color)
+
+            size *= 0.95
+            color.a *= 0.90
+
+            end_pos = start_pos;
         }
     }
 }
@@ -248,6 +269,7 @@ export class Scene
 
     constructor() {
         this.m_fireworks = new Array();
+        this.next_launch = 0.3;
     }
 
     set_screen_size(width: number, height: number) {
