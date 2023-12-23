@@ -69,8 +69,8 @@ class Flare {
     public colorAtTime(secs: number) : Color4 {
         // Linear fade out is fine.  Note we can start with a > 1.0,
         // so it actually appears exponential.
-        let percent = secs / this.duration_secs
         let ret = this.color.clone()
+        let percent = secs / this.duration_secs
         ret.a *= (1 - percent)
         return ret
     }
@@ -129,8 +129,8 @@ class Firework {
             color.a = random_range(0.7, 4.0)
 
             // other variance
-            let duration_secs = random_range(0.5, 3.0)
-            let trail_secs = random_range(0.3, 0.7)
+            let duration_secs = 2.0; //random_range(0.5, 3.0)
+            let trail_secs = 0.5; //random_range(0.3, 0.7)
             const size = random_range(0.003, 0.005)
 
             let f = new Flare(velocity, size, color, duration_secs, trail_secs)
@@ -194,9 +194,10 @@ class Firework {
         let size = flare.size
 
         let end_pos = flare.pointAtTime(l_secs, this.pos)
+        let orig_color = flare.colorAtTime(l_secs)
+        let color = orig_color
 
         while (true) {
-            let color = flare.colorAtTime(l_secs)
 
             l_secs -= PLUME_STEP_SECS
             if (l_secs < 0) { l_secs = 0; }
@@ -224,8 +225,8 @@ class Firework {
             b.append_raw(1.0)
             b.append_raw_color4(color)
 
-            size *= 0.95
-            color.a *= 0.90
+            size *= 0.99
+            color.a = orig_color.a * ((1/(plume_secs+1) + 0.1))
 
             end_pos = start_pos;
 
@@ -286,7 +287,7 @@ export class Scene
 
         if (time > this.next_launch) {
             this.launch_firework(time)
-            this.next_launch = time + random_range(0.1, 0.7)
+            this.next_launch = time + random_range(1.1, 1.7)
         }
 
         for (const fw of this.m_fireworks) {
