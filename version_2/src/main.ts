@@ -148,6 +148,7 @@ const init = async () => {
             stats_time_start = elapsed_secs
         }
         num_frames += 1
+        g_last_time = elapsed_secs
 
         const currentWidth = canvas.clientWidth * devicePixelRatio;
         const currentHeight = canvas.clientHeight * devicePixelRatio;
@@ -182,7 +183,8 @@ const init = async () => {
         const cpu_buffer = new Float32Array(vertexBufferCPU.getMappedRange());
         const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
         scene.set_screen_size(canvas.width, canvas.height)
-        scene.draw(cpu_buffer_wrapper, elapsed_secs);
+        const scene_time = (g_pause_time == 0 ? elapsed_secs : g_pause_time) - g_pause_total;
+        scene.draw(cpu_buffer_wrapper, scene_time);
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
         vertexBufferCPU.unmap();
 
@@ -237,6 +239,24 @@ addEventListener('keydown', function (e) {
     if (e.key == "f") {
         toggleFullScreen()
     }
+    if (e.key == " ") {
+        if (g_pause_time == 0) {
+            g_pause_time = g_last_time;
+        } else {
+            g_pause_total += g_last_time - g_pause_time
+            g_pause_time = 0;
+        }
+    }
+    if (e.key == "j") {
+        if (g_pause_time != 0) {
+            g_pause_time -= 1/60;
+        }
+    }
+    if (e.key == "k") {
+        if (g_pause_time != 0) {
+            g_pause_time += 1/60;
+        }
+    }
 }, false);
 
 addEventListener("dblclick", (event) => {
@@ -246,6 +266,10 @@ addEventListener("dblclick", (event) => {
 
 
 var is_fullscreen = false;
+var g_last_time = 0;
+var g_pause_time = 0;
+var g_pause_total = 0;
+
 function toggleFullScreen() {
     if (is_fullscreen) {
         closeFullscreen();

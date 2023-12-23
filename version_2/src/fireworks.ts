@@ -184,7 +184,7 @@ class Firework {
         let b = buffer;
 
         // If this is too small, flickering happens when the dots move
-        let PLUME_STEP_SECS = 0.02
+        let PLUME_STEP_SECS = 1/60  // 0.016666
 
         let l_secs = secs
         if (l_secs > flare.duration_secs) {
@@ -199,28 +199,27 @@ class Firework {
             let color = flare.colorAtTime(l_secs)
 
             l_secs -= PLUME_STEP_SECS
+            if (l_secs < 0) { l_secs = 0; }
+
             plume_secs += PLUME_STEP_SECS
-            if (l_secs < 0 || plume_secs > flare.trail_secs) {
-                return
-            }
 
             let start_pos = flare.pointAtTime(l_secs, this.pos)
 
             b.append_raw(start_pos.x - size)
-            b.append_raw(start_pos.y)
+            b.append_raw(start_pos.y + size)
             b.append_raw(start_pos.z)
             b.append_raw(1.0)
             b.append_raw_color4(color)
 
             b.append_raw(start_pos.x + size)
-            b.append_raw(start_pos.y)
+            b.append_raw(start_pos.y + size)
             b.append_raw(start_pos.z)
             b.append_raw(1.0)
             b.append_raw_color4(color)
 
             // dest point
             b.append_raw(end_pos.x)
-            b.append_raw(end_pos.y)
+            b.append_raw(end_pos.y - size)
             b.append_raw(end_pos.z)
             b.append_raw(1.0)
             b.append_raw_color4(color)
@@ -229,6 +228,10 @@ class Firework {
             color.a *= 0.90
 
             end_pos = start_pos;
+
+            if (l_secs == 0 || plume_secs > flare.trail_secs) {
+                return
+            }
         }
     }
 }
@@ -278,6 +281,9 @@ export class Scene
 
     draw(buffer: BufferWrapper, time: number)
     {
+        time = Math.floor(time * 60) / 60
+        //console.log(time)
+
         if (time > this.next_launch) {
             this.launch_firework(time)
             this.next_launch = time + random_range(0.1, 0.7)
