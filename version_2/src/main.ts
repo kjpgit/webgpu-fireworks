@@ -152,7 +152,7 @@ const init_webgpu = async (main: Main) => {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
       mappedAtCreation: true,
     });
-    var vertices = [0.3, 0.1, 1, 0.8, 0.5, 1]
+    var vertices = [1.7, 0.1, 1, 0.8, 0.5, 1]
     new Float32Array(buffer0.getMappedRange()).set(vertices);
     buffer0.unmap();
 
@@ -188,7 +188,6 @@ const init_webgpu = async (main: Main) => {
         },
     ];
 
-
     // These are simple pass-through shaders, hopefully
     // I will try making more complex shaders in the future.
     //
@@ -209,6 +208,7 @@ const init_webgpu = async (main: Main) => {
             }
 
             @group(0) @binding(0) var<storage,read> buffer0: array<f32>;
+
             fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32> ) -> f32
             {
                 var pa = p-a;
@@ -222,12 +222,13 @@ const init_webgpu = async (main: Main) => {
             fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
             {
                 //return fragData.color;
+                var colorR = buffer0[0];
 
                 var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var k = Line(uv, vec2<f32>(0.3,0.1), vec2<f32>(0.8,0.5));
                 var thickness = 0.1;
                 var ratio = smoothstep(0.0, thickness, k);
-                return mix( vec4<f32>(1,0,0,1), vec4<f32>(0,0,0,1), ratio);
+                return mix( vec4<f32>(colorR,0,0,1), vec4<f32>(0,0,0,1), ratio);
             }
         `,
     });
@@ -267,6 +268,18 @@ const init_webgpu = async (main: Main) => {
         multisample: { count: 4, },
 
     });
+
+    const uniformBindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: { buffer: buffer0, },
+            },
+        ],
+    });
+
+
 
     let renderTarget: GPUTexture | undefined = undefined;
     let renderTargetView: GPUTextureView;
@@ -339,6 +352,7 @@ const init_webgpu = async (main: Main) => {
 
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline);
+        passEncoder.setBindGroup(0, uniformBindGroup);
         passEncoder.setVertexBuffer(0, vertexBufferGPU);
         passEncoder.draw(cpu_buffer_wrapper.elements_used() / 8);
         passEncoder.end();
