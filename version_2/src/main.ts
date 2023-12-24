@@ -176,10 +176,25 @@ const init_webgpu = async (main: Main) => {
                 output.color = color;
                 return output;
             }
+
+            fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32> ) -> f32
+            {
+                var pa = p-a;
+                var ba = b-a;
+                var h: f32 = saturate( dot(pa,ba) / dot(ba,ba) );
+                var d: vec2<f32> = pa - ba * h;
+                return dot(d,d);
+            }
+
             @fragment
             fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
             {
-                return fragData.color;
+                //return fragData.color;
+
+                var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
+                var k = Line(uv, vec2<f32>(0.3,0.1), vec2<f32>(0.8,0.5));
+                var thickness = 0.0003;
+                return mix( vec4<f32>(1,0,0,1), vec4<f32>(0,0,0,1), smoothstep(0.0, thickness, k) );
             }
         `,
     });

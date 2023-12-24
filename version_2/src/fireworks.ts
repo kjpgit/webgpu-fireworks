@@ -296,9 +296,11 @@ export class Scene
             this.next_launch = time + random_range(1.1, 1.7)
         }
 
-        for (const fw of this.m_fireworks) {
-            fw.draw(time, buffer)
-        }
+        this.drawFullQuad(buffer)
+
+        //for (const fw of this.m_fireworks) {
+            //fw.draw(time, buffer)
+        //}
 
         if (buffer.bytes_used() > this.stats_max_buffer) {
             this.stats_max_buffer = buffer.bytes_used()
@@ -317,6 +319,48 @@ export class Scene
         while (this.m_fireworks.length > 10) {
             this.m_fireworks.shift()
         }
+    }
+
+    // 8 f32 * 4 byte * 6 vertices = 192 bytes
+    private drawFullQuad(b: BufferWrapper) {
+        const color = new Color4(.5,1,1,1)
+        b.append_raw(-1)
+        b.append_raw(1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
+
+        b.append_raw(1)
+        b.append_raw(1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
+
+        b.append_raw(1)
+        b.append_raw(-1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
+
+        // two
+
+        b.append_raw(-1)
+        b.append_raw(1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
+
+        b.append_raw(-1)
+        b.append_raw(-1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
+
+        b.append_raw(1)
+        b.append_raw(-1)
+        b.append_raw(1)
+        b.append_raw(1.0)
+        b.append_raw_color4(color)
     }
 
 }
