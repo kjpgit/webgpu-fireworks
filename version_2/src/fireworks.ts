@@ -291,9 +291,9 @@ export class Scene
 
         this.drawFullQuad(buffer)
 
-        for (const fw of this.m_fireworks) {
-            fw.draw(time, ub)
-        }
+        //for (const fw of this.m_fireworks) {
+            //fw.draw(time, ub)
+        //}
 
         if (ub.bytes_used() > this.stats_max_buffer) {
             this.stats_max_buffer = ub.bytes_used()

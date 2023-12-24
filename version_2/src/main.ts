@@ -92,6 +92,31 @@ class Main
         }
     }
 
+    draw_uniform(width: number, height: number, elapsedSecs: number, buffer: BufferWrapper) {
+        const delta = Math.sin(elapsedSecs * 8) / 8;
+        var vertices = [
+            width, height, 4, 0,
+            0.5 + delta, 0.5, 1, 1,
+            0.99, 0.99, 1, 1,
+            0.0, 1.0, 1.0, 1,
+
+            0.5, 0.5, 1, 1,
+            0.5, 0.01, 1, 1,
+            0.0, 1.0, 1.0, 1,
+
+            0.5, 0.5, 1, 1,
+            0.01, 0.5, 1, 1,
+            0.0, 1.0, 1.0, 1,
+
+            0.2, 0.25, 1, 1,
+            0.2, 0.29, 1, 1,
+            1.0, 1.0, 1.0, 1,
+        ]
+        for (const f of vertices) {
+            buffer.append_raw(f)
+        }
+    }
+
 }
 
 
@@ -151,28 +176,7 @@ const init_webgpu = async (main: Main) => {
     const buffer0 = device.createBuffer({
       size: MAX_BUFFER_SIZE,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-      mappedAtCreation: true,
     });
-    var vertices = [
-        canvas.width, canvas.height, 4, 0,
-        0.5, 0.5, 1, 1,
-        0.99, 0.99, 1, 1,
-        0.0, 1.0, 1.0, 1,
-
-        0.5, 0.5, 1, 1,
-        0.5, 0.01, 1, 1,
-        0.0, 1.0, 1.0, 1,
-
-        0.5, 0.5, 1, 1,
-        0.01, 0.5, 1, 1,
-        0.0, 1.0, 1.0, 1,
-
-        0.2, 0.25, 1, 1,
-        0.2, 0.29, 1, 1,
-        1.0, 1.0, 1.0, 1,
-    ]
-    new Float32Array(buffer0.getMappedRange()).set(vertices);
-    buffer0.unmap();
 
     const uniformBufferCPU = device.createBuffer({
         size: MAX_BUFFER_SIZE,
@@ -384,7 +388,10 @@ const init_webgpu = async (main: Main) => {
 
         const scene_time = (main.pause_time == 0 ? elapsed_secs : main.pause_time) - main.pause_total;
         main.scene.set_screen_size(canvas.width, canvas.height)
+
+        main.draw_uniform(canvas.width, canvas.height, scene_time, uniform_buffer_wrapper)
         main.scene.draw(cpu_buffer_wrapper, uniform_buffer_wrapper, scene_time);
+
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
         const uniform_buffer_bytes_used = uniform_buffer_wrapper.bytes_used();
 
