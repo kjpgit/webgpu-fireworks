@@ -126,8 +126,35 @@ const init_webgpu = async (main: Main) => {
         alphaMode: "opaque"
     });
 
-    // Pack them all into one array
-    // Each vertex has a position and a color packed in memory in X Y Z W R G B A order
+
+    // COMPUTE SHADER
+    /*
+    const computeShader = device.createShaderModule({
+        code: `
+        `,
+    });
+
+    const bindGroupLayoutCompute = device.createBindGroupLayout({
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: {
+                    type: 'storage',
+                },
+            },
+        ],
+    });
+   */
+
+    const buffer0 = device.createBuffer({
+      size: 1000,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
+      mappedAtCreation: true,
+    });
+
+
+    // VERTEX DATA
     const MAX_BUFFER_SIZE = 20000000;
     const vertexBufferCPU = device.createBuffer({
         size: MAX_BUFFER_SIZE,
@@ -157,6 +184,7 @@ const init_webgpu = async (main: Main) => {
             stepMode: "vertex",
         },
     ];
+
 
     // These are simple pass-through shaders, hopefully
     // I will try making more complex shaders in the future.
