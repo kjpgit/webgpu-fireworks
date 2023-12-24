@@ -318,8 +318,7 @@ const init_webgpu = async (main: Main) => {
         primitive: {
             topology: "triangle-list",
         },
-        multisample: { count: 4, },
-
+        multisample: { count: 1, },
     });
 
     const uniformBindGroup = device.createBindGroup({
@@ -333,9 +332,6 @@ const init_webgpu = async (main: Main) => {
     });
 
 
-    let renderTarget: GPUTexture | undefined = undefined;
-    let renderTargetView: GPUTextureView;
-
     async function frame(elapsedMs: DOMHighResTimeStamp, main: Main) {
         // This isn't perfectly accurate (off by 1?), averaging the last 60
         // frametimes might be more precise.
@@ -348,33 +344,6 @@ const init_webgpu = async (main: Main) => {
         main.num_frames += 1
         main.last_time = elapsed_secs
 
-        const currentWidth = canvas.clientWidth * devicePixelRatio;
-        const currentHeight = canvas.clientHeight * devicePixelRatio;
-
-        // When the size changes, we need to reallocate the render target.
-        // We also need to set the physical size of the canvas to match the computed CSS size.
-        if (renderTarget == undefined || ((currentWidth !== canvas.width || currentHeight !== canvas.height) &&
-            currentWidth && currentHeight))
-        {
-            if (renderTarget !== undefined) {
-                // Destroy the previous render target
-                renderTarget.destroy();
-            }
-
-            // Setting the canvas width and height will automatically resize the textures returned
-            // when calling getCurrentTexture() on the context.
-            canvas.width = currentWidth;
-            canvas.height = currentHeight;
-
-            renderTarget = device.createTexture({
-                size: [canvas.width, canvas.height],
-                sampleCount: 4,
-                format: presentationFormat,
-                usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            });
-
-            renderTargetView = renderTarget.createView();
-        }
 
         // Write into CPU buffer, then release it
         await vertexBufferCPU.mapAsync(GPUMapMode.WRITE);
@@ -402,11 +371,10 @@ const init_webgpu = async (main: Main) => {
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
-                    view: renderTargetView,
-                    resolveTarget: context.getCurrentTexture().createView(),
+                    view: context.getCurrentTexture().createView(),
                     clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
                     loadOp: "clear",
-                    storeOp: "discard",
+                    storeOp: "store",
                 },
             ],
         };
