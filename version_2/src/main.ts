@@ -96,21 +96,21 @@ class Main
         const delta = Math.sin(elapsedSecs * 8) / 8;
         var vertices = [
             width, height, 4, 0,
-            0.5 + delta, 0.5, 1, 1,
-            0.99, 0.99, 1, 1,
-            0.0, 1.0, 1.0, 1,
+            0.0 + delta, -0.2, 1, 1,
+            0.95, 0.95, 1, 1,
+            0.0, 1.0, 0.0, 1,
 
-            0.5, 0.5, 1, 1,
-            0.5, 0.01, 1, 1,
-            0.0, 1.0, 1.0, 1,
+            -0.95, 0.95, 1, 1,
+            -0.95, -0.95, 1, 1,
+            1.0, 0.0, 1.0, 1,
 
-            0.5, 0.5, 1, 1,
-            0.01, 0.5, 1, 1,
-            0.0, 1.0, 1.0, 1,
+            0.0, 0.0, 1, 1,
+            0.0, -0.95, 1, 1,
+            0.0, 0.0, 1.0, 1,
 
-            0.2, 0.25, 1, 1,
-            0.2, 0.29, 1, 1,
-            1.0, 1.0, 1.0, 1,
+            -0.8, -0.1, 1, 1,
+            0.8, -0.1, 1, 1,
+            1.0, 0.0, 0.0, 1,
         ]
         for (const f of vertices) {
             buffer.append_raw(f)
@@ -262,7 +262,8 @@ const init_webgpu = async (main: Main) => {
             fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
             {
                 //return fragData.color;
-                var uv = vec2<f32>(fragData.position.x/buffer0.screen_x, fragData.position.y/buffer0.screen_y);
+                var uv = vec2<f32>(fragData.position.x * 2/buffer0.screen_x - 1.,
+                                   fragData.position.y * -2/buffer0.screen_y + 1.);
                 var aspect = buffer0.screen_x / buffer0.screen_y;
                 //var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var ret = vec4<f32>(0.0);
@@ -276,9 +277,9 @@ const init_webgpu = async (main: Main) => {
                     var k = Line(uv, line_start, line_end, aspect);
                     //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
-                    var thickness = 0.005;
+                    var thickness = 0.05;
                     var ratio = smoothstep(0.0, thickness, k);
-                    var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,1), ratio);
+                    var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,0), ratio);
                     ret = max(ret, newColor);
                 }
                 return ret;
@@ -300,6 +301,7 @@ const init_webgpu = async (main: Main) => {
             targets: [
                 {
                     format: presentationFormat,
+                    /*
                     blend: {
                         color: {
                             operation: "add",
@@ -312,6 +314,7 @@ const init_webgpu = async (main: Main) => {
                             dstFactor: "one-minus-src-alpha",
                         }
                     }
+                   */
                 },
             ],
         },
