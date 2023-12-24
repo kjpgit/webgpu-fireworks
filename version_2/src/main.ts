@@ -258,6 +258,15 @@ const init_webgpu = async (main: Main) => {
                 return length(d);
             }
 
+            fn is_bbox(pos: vec2<f32>, c1: vec2<f32>, c2: vec2<f32>) -> u32 {
+                if (pos.x >= min(c1.x, c2.x) && pos.x <= max(c1.x, c2.x)
+                    //&& pos.y >= min(c1.y, c2.y) && pos.y <= max(c1.y, c2.y)
+                   ) {
+                        return 1;
+                }
+                return 0;
+            }
+
             @fragment
             fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
             {
@@ -273,17 +282,20 @@ const init_webgpu = async (main: Main) => {
                 for (var i = 0u; i < num_lines; i++) {
                     var line_start = buffer0.lines[i].line_start.xy;
                     var line_end = buffer0.lines[i].line_end.xy;
-                    var line_color = buffer0.lines[i].line_color;
-                    var k = Line(uv, line_start, line_end, aspect);
-                    //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
-                    var thickness = 0.01;
-                    var ratio = smoothstep(0.0, thickness, k);
-                    var newColor = mix(line_color, vec4<f32>(0,0,0,0), ratio);
-                    newColor.r *= newColor.a;
-                    newColor.g *= newColor.a;
-                    newColor.b *= newColor.a;
-                    ret = max(ret, newColor);
+                    if (is_bbox(uv, line_start, line_end) > 0) {
+                        var line_color = buffer0.lines[i].line_color;
+                        var k = Line(uv, line_start, line_end, aspect);
+                        //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
+
+                        var thickness = 0.01;
+                        var ratio = smoothstep(0.0, thickness, k);
+                        var newColor = mix(line_color, vec4<f32>(0,0,0,0), ratio);
+                        newColor.r *= newColor.a;
+                        newColor.g *= newColor.a;
+                        newColor.b *= newColor.a;
+                        ret = max(ret, newColor);
+                    }
                 }
                 return ret;
             }
@@ -371,7 +383,7 @@ const init_webgpu = async (main: Main) => {
         const uniform_buffer_bytes_used = uniform_buffer_wrapper.bytes_used();
 
         const num_line_segments = (uniform_buffer_wrapper.bytes_used() - 4*4) / (12*4)
-        console.log("num_line_segments: " num_line_segments);
+        //console.log("num_line_segments: " + num_line_segments);
         uniform_buffer[2] = Math.min(num_line_segments, 1000);
 
         vertexBufferCPU.unmap();
