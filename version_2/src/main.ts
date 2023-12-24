@@ -153,18 +153,22 @@ const init_webgpu = async (main: Main) => {
       mappedAtCreation: true,
     });
     var vertices = [
-        canvas.width, canvas.height,
-        0.5, 0.5, 1,
-        0.75, 0.75, 1,
-        1.0, 1.0, 1.0,
+        canvas.width, canvas.height, 0, 0,
+        0.5, 0.5, 1, 1,
+        0.99, 0.99, 1, 1,
+        1.0, 0.0, 0.0, 1,
 
-        0.5, 0.5, 1,
-        0.5, 0.9, 1,
-        0.0, 1.0, 1.0,
+        0.5, 0.5, 1, 1,
+        0.5, 0.01, 1, 1,
+        0.0, 1.0, 1.0, 1,
 
-        0.2, 0.25, 1,
-        0.2, 0.29, 1,
-        1.0, 1.0, 1.0,
+        0.5, 0.5, 1, 1,
+        0.01, 0.5, 1, 1,
+        1.0, 0.3, 1.0, 1,
+
+        0.2, 0.25, 1, 1,
+        0.2, 0.29, 1, 1,
+        1.0, 1.0, 1.0, 1,
     ]
     new Float32Array(buffer0.getMappedRange()).set(vertices);
     buffer0.unmap();
@@ -214,13 +218,15 @@ const init_webgpu = async (main: Main) => {
             struct InputData {
                 screen_x: f32,
                 screen_y: f32,
+                unused_a: f32,
+                unused_b: f32,
                 lines: array<InputLine>,
             };
 
             struct InputLine {
-                line_start: vec3<f32>,
-                line_end: vec3<f32>,
-                line_color: vec3<f32>,
+                line_start: vec4<f32>,
+                line_end: vec4<f32>,
+                line_color: vec4<f32>,
             };
 
             @vertex
@@ -252,12 +258,12 @@ const init_webgpu = async (main: Main) => {
                 //var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var ret = vec4<f32>(0.0);
 
-                for (var i = 0u; i < 1; i++) {
-                    //var line_start = buffer0.lines[i].line_start.xy;
-                    //var line_end = buffer0.lines[i].line_end.xy;
+                for (var i = 0u; i < 3; i++) {
+                    var line_start = buffer0.lines[i].line_start.xy;
+                    var line_end = buffer0.lines[i].line_end.xy;
                     var line_color = buffer0.lines[i].line_color.rgb;
-                    //var k = Line(uv, line_start, line_end);
-                    var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
+                    var k = Line(uv, line_start, line_end);
+                    //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
                     var thickness = 0.003;
                     var ratio = smoothstep(0.0, thickness, k);
