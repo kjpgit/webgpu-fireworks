@@ -263,6 +263,7 @@ const init_webgpu = async (main: Main) => {
                 //var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var ret = vec4<f32>(0.0);
                 var num_lines: u32 = u32(buffer0.unused_a);
+                //var num_lines: u32 = arrayLength(&buffer0.lines);
 
                 for (var i = 0u; i < num_lines; i++) {
                     var line_start = buffer0.lines[i].line_start.xy;

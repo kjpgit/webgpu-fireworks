@@ -210,23 +210,16 @@ class Firework {
 
             let start_pos = flare.pointAtTime(l_secs, this.pos)
 
-            b.append_raw(start_pos.x - size)
-            b.append_raw(start_pos.y + size)
+            b.append_raw(start_pos.x)
+            b.append_raw(start_pos.y)
             b.append_raw(start_pos.z)
             b.append_raw(1.0)
-            b.append_raw_color4(color)
 
-            b.append_raw(start_pos.x + size)
-            b.append_raw(start_pos.y + size)
-            b.append_raw(start_pos.z)
-            b.append_raw(1.0)
-            b.append_raw_color4(color)
-
-            // dest point
             b.append_raw(end_pos.x)
-            b.append_raw(end_pos.y - size)
+            b.append_raw(end_pos.y)
             b.append_raw(end_pos.z)
             b.append_raw(1.0)
+
             b.append_raw_color4(color)
 
             // todo: make point smaller at end
@@ -286,7 +279,7 @@ export class Scene
         this.x_aspect_ratio = height / width
     }
 
-    draw(buffer: BufferWrapper, time: number)
+    draw(buffer: BufferWrapper, ub: BufferWrapper, time: number)
     {
         time = Math.floor(time * 60) / 60
         //console.log(time)
@@ -298,12 +291,12 @@ export class Scene
 
         this.drawFullQuad(buffer)
 
-        //for (const fw of this.m_fireworks) {
-            //fw.draw(time, buffer)
-        //}
+        for (const fw of this.m_fireworks) {
+            fw.draw(time, ub)
+        }
 
-        if (buffer.bytes_used() > this.stats_max_buffer) {
-            this.stats_max_buffer = buffer.bytes_used()
+        if (ub.bytes_used() > this.stats_max_buffer) {
+            this.stats_max_buffer = ub.bytes_used()
         }
 
         if (this.next_stats < time) {
