@@ -95,7 +95,7 @@ class Main
     draw_uniform(width: number, height: number, elapsedSecs: number, buffer: BufferWrapper) {
         const delta = Math.sin(elapsedSecs * 8) / 8;
         var vertices = [
-            width, height, 4, 0,
+            width, height, 14, 0,
             0.0 + delta, -0.2, 1, 1,
             0.95, 0.95, 1, 1,
             0.0, 1.0, 0.0, 1,
@@ -277,7 +277,7 @@ const init_webgpu = async (main: Main) => {
                     var k = Line(uv, line_start, line_end, aspect);
                     //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
-                    var thickness = 0.05;
+                    var thickness = 0.01;
                     var ratio = smoothstep(0.0, thickness, k);
                     var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,0), ratio);
                     ret = max(ret, newColor);
@@ -366,6 +366,10 @@ const init_webgpu = async (main: Main) => {
 
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
         const uniform_buffer_bytes_used = uniform_buffer_wrapper.bytes_used();
+
+        const num_line_segments = (uniform_buffer_wrapper.bytes_used() - 4*4) / (12*4)
+        console.log("num_line_segments: " num_line_segments);
+        uniform_buffer[2] = min(num_line_segments, 1000);
 
         vertexBufferCPU.unmap();
         uniformBufferCPU.unmap();

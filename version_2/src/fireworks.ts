@@ -153,7 +153,7 @@ class Firework {
             // classic particle only
             for (const flare of this.m_flares) {
                 //console.log(`flare velocity_vec ${flare.velocity_vec.toString()}`)
-                this.render_flare_simple(flare, secs, buffer)
+                //this.render_flare_simple(flare, secs, buffer)
             }
         } else {
             // long trail
@@ -291,9 +291,9 @@ export class Scene
 
         this.drawFullQuad(buffer)
 
-        //for (const fw of this.m_fireworks) {
-            //fw.draw(time, ub)
-        //}
+        for (const fw of this.m_fireworks) {
+            fw.draw(time, ub)
+        }
 
         if (ub.bytes_used() > this.stats_max_buffer) {
             this.stats_max_buffer = ub.bytes_used()
