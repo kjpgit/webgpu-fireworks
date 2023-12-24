@@ -156,7 +156,7 @@ const init_webgpu = async (main: Main) => {
         canvas.width, canvas.height, 0, 0,
         0.5, 0.5, 1, 1,
         0.99, 0.99, 1, 1,
-        1.0, 0.0, 0.0, 1,
+        0.0, 1.0, 1.0, 1,
 
         0.5, 0.5, 1, 1,
         0.5, 0.01, 1, 1,
@@ -164,7 +164,7 @@ const init_webgpu = async (main: Main) => {
 
         0.5, 0.5, 1, 1,
         0.01, 0.5, 1, 1,
-        1.0, 0.3, 1.0, 1,
+        0.0, 1.0, 1.0, 1,
 
         0.2, 0.25, 1, 1,
         0.2, 0.29, 1, 1,
@@ -241,12 +241,13 @@ const init_webgpu = async (main: Main) => {
 
             @group(0) @binding(0) var<storage,read> buffer0: InputData;
 
-            fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32> ) -> f32
+            fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, aspect: f32 ) -> f32
             {
                 var pa = p-a;
                 var ba = b-a;
                 var h: f32 = saturate( dot(pa,ba) / dot(ba,ba) );
                 var d: vec2<f32> = pa - ba * h;
+                d.x *= aspect;
                 return length(d);
             }
 
@@ -255,6 +256,7 @@ const init_webgpu = async (main: Main) => {
             {
                 //return fragData.color;
                 var uv = vec2<f32>(fragData.position.x/buffer0.screen_x, fragData.position.y/buffer0.screen_y);
+                var aspect = buffer0.screen_x / buffer0.screen_y;
                 //var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var ret = vec4<f32>(0.0);
 
@@ -262,12 +264,13 @@ const init_webgpu = async (main: Main) => {
                     var line_start = buffer0.lines[i].line_start.xy;
                     var line_end = buffer0.lines[i].line_end.xy;
                     var line_color = buffer0.lines[i].line_color.rgb;
-                    var k = Line(uv, line_start, line_end);
+                    var k = Line(uv, line_start, line_end, aspect);
                     //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
-                    var thickness = 0.003;
+                    var thickness = 0.005;
                     var ratio = smoothstep(0.0, thickness, k);
-                    ret += mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,1), ratio);
+                    var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,1), ratio);
+                    ret = max(ret, newColor);
                 }
                 return ret;
             }
