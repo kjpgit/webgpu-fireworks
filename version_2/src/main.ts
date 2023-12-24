@@ -152,6 +152,9 @@ const init_webgpu = async (main: Main) => {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
       mappedAtCreation: true,
     });
+    var vertices = [0.3, 0.1, 1, 0.8, 0.5, 1]
+    new Float32Array(buffer0.getMappedRange()).set(vertices);
+    buffer0.unmap();
 
 
     // VERTEX DATA
@@ -205,6 +208,7 @@ const init_webgpu = async (main: Main) => {
                 return output;
             }
 
+            @group(0) @binding(0) var<storage,read> buffer0: array<f32>;
             fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32> ) -> f32
             {
                 var pa = p-a;
