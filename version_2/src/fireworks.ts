@@ -286,7 +286,7 @@ export class Scene
 
         if (time > this.next_launch) {
             this.launch_firework(time)
-            this.next_launch = time + random_range(1.1, 1.7)
+            this.next_launch = time + random_range(2.1, 2.7)
         }
 
         this.drawFullQuad(buffer)
@@ -309,7 +309,7 @@ export class Scene
     private launch_firework(current_time: number) {
         let fw = new Firework(current_time, this.x_aspect_ratio)
         this.m_fireworks.push(fw)
-        while (this.m_fireworks.length > 10) {
+        while (this.m_fireworks.length > 1) {
             this.m_fireworks.shift()
         }
     }

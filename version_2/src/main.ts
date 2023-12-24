@@ -273,13 +273,13 @@ const init_webgpu = async (main: Main) => {
                 for (var i = 0u; i < num_lines; i++) {
                     var line_start = buffer0.lines[i].line_start.xy;
                     var line_end = buffer0.lines[i].line_end.xy;
-                    var line_color = buffer0.lines[i].line_color.rgb;
+                    var line_color = buffer0.lines[i].line_color;
                     var k = Line(uv, line_start, line_end, aspect);
                     //var k = Line(uv, vec2<f32>(0.01,0.01), vec2<f32>(0.99,0.99));
 
                     var thickness = 0.01;
                     var ratio = smoothstep(0.0, thickness, k);
-                    var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,0), ratio);
+                    var newColor = mix(line_color, vec4<f32>(0,0,0,0), ratio);
                     newColor.r *= newColor.a;
                     newColor.g *= newColor.a;
                     newColor.b *= newColor.a;
