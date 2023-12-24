@@ -193,8 +193,9 @@ const init_webgpu = async (main: Main) => {
 
                 var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var k = Line(uv, vec2<f32>(0.3,0.1), vec2<f32>(0.8,0.5));
-                var thickness = 0.001;
-                return mix( vec4<f32>(1,0,0,1), vec4<f32>(0,0,0,1), smoothstep(0.0, thickness, k) );
+                var thickness = 0.1;
+                var ratio = smoothstep(0.0, thickness, k);
+                return mix( vec4<f32>(1,0,0,1), vec4<f32>(0,0,0,1), ratio);
             }
         `,
     });
