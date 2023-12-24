@@ -113,6 +113,7 @@ const init_webgpu = async (main: Main) => {
     const context = canvas.getContext("webgpu") ?? do_throw("Canvas does not support WebGPU");
 
     // Configure the swap chain
+    const MAX_BUFFER_SIZE = 20000000;
     const devicePixelRatio = window.devicePixelRatio || 1;
     console.log(`devicePixelRatio is ${devicePixelRatio}`);
     canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -148,12 +149,12 @@ const init_webgpu = async (main: Main) => {
    */
 
     const buffer0 = device.createBuffer({
-      size: 1000,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
+      size: MAX_BUFFER_SIZE,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       mappedAtCreation: true,
     });
     var vertices = [
-        canvas.width, canvas.height, 0, 0,
+        canvas.width, canvas.height, 4, 0,
         0.5, 0.5, 1, 1,
         0.99, 0.99, 1, 1,
         0.0, 1.0, 1.0, 1,
@@ -173,9 +174,11 @@ const init_webgpu = async (main: Main) => {
     new Float32Array(buffer0.getMappedRange()).set(vertices);
     buffer0.unmap();
 
+    const uniformBufferCPU = device.createBuffer({
+        size: MAX_BUFFER_SIZE,
+        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
+    });
 
-    // VERTEX DATA
-    const MAX_BUFFER_SIZE = 20000000;
     const vertexBufferCPU = device.createBuffer({
         size: MAX_BUFFER_SIZE,
         usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
@@ -259,8 +262,9 @@ const init_webgpu = async (main: Main) => {
                 var aspect = buffer0.screen_x / buffer0.screen_y;
                 //var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
                 var ret = vec4<f32>(0.0);
+                var num_lines: u32 = u32(buffer0.unused_a);
 
-                for (var i = 0u; i < 3; i++) {
+                for (var i = 0u; i < num_lines; i++) {
                     var line_start = buffer0.lines[i].line_start.xy;
                     var line_end = buffer0.lines[i].line_end.xy;
                     var line_color = buffer0.lines[i].line_color.rgb;
@@ -369,13 +373,22 @@ const init_webgpu = async (main: Main) => {
 
         // Write into CPU buffer, then release it
         await vertexBufferCPU.mapAsync(GPUMapMode.WRITE);
+        await uniformBufferCPU.mapAsync(GPUMapMode.WRITE);
+
         const cpu_buffer = new Float32Array(vertexBufferCPU.getMappedRange());
         const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
+
+        const uniform_buffer = new Float32Array(uniformBufferCPU.getMappedRange());
+        const uniform_buffer_wrapper = new BufferWrapper(uniform_buffer);
+
         const scene_time = (main.pause_time == 0 ? elapsed_secs : main.pause_time) - main.pause_total;
         main.scene.set_screen_size(canvas.width, canvas.height)
-        main.scene.draw(cpu_buffer_wrapper, scene_time);
+        main.scene.draw(cpu_buffer_wrapper, uniform_buffer_wrapper, scene_time);
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
+        const uniform_buffer_bytes_used = uniform_buffer_wrapper.bytes_used();
+
         vertexBufferCPU.unmap();
+        uniformBufferCPU.unmap();
 
         // GPU work starts here
         const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -392,6 +405,7 @@ const init_webgpu = async (main: Main) => {
 
         const commandEncoder = device.createCommandEncoder();
         commandEncoder.copyBufferToBuffer(vertexBufferCPU, 0, vertexBufferGPU, 0, cpu_buffer_bytes_used)
+        commandEncoder.copyBufferToBuffer(uniformBufferCPU, 0, buffer0, 0, uniform_buffer_bytes_used)
 
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline);
