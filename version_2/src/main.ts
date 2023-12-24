@@ -280,6 +280,9 @@ const init_webgpu = async (main: Main) => {
                     var thickness = 0.01;
                     var ratio = smoothstep(0.0, thickness, k);
                     var newColor = mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,0), ratio);
+                    newColor.r *= newColor.a;
+                    newColor.g *= newColor.a;
+                    newColor.b *= newColor.a;
                     ret = max(ret, newColor);
                 }
                 return ret;
@@ -369,7 +372,7 @@ const init_webgpu = async (main: Main) => {
 
         const num_line_segments = (uniform_buffer_wrapper.bytes_used() - 4*4) / (12*4)
         console.log("num_line_segments: " num_line_segments);
-        uniform_buffer[2] = min(num_line_segments, 1000);
+        uniform_buffer[2] = Math.min(num_line_segments, 1000);
 
         vertexBufferCPU.unmap();
         uniformBufferCPU.unmap();
