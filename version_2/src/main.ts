@@ -152,7 +152,16 @@ const init_webgpu = async (main: Main) => {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
       mappedAtCreation: true,
     });
-    var vertices = [1.7, 0.1, 1, 0.8, 0.5, 1]
+    var vertices = [
+        canvas.width, canvas.height,
+        0.5, 0.5, 1,
+        0.75, 0.75, 1,
+        1.0, 0.0, 0.0,
+
+        0.5, 0.5, 1,
+        0.5, 0.9, 1,
+        0.0, 1.0, 0.0,
+    ]
     new Float32Array(buffer0.getMappedRange()).set(vertices);
     buffer0.unmap();
 
@@ -197,6 +206,19 @@ const init_webgpu = async (main: Main) => {
                 @builtin(position) position : vec4<f32>,
                 @location(0) color : vec4<f32>,
             };
+
+            struct InputData {
+                screen_x: f32,
+                screen_y: f32,
+                lines: array<InputLine>,
+            };
+
+            struct InputLine {
+                line_start: vec3<f32>,
+                line_end: vec3<f32>,
+                line_color: vec3<f32>,
+            };
+
             @vertex
             fn vertex_main(@location(0) position: vec4<f32>,
                         @location(1) color: vec4<f32>) -> VertexOut
@@ -207,7 +229,7 @@ const init_webgpu = async (main: Main) => {
                 return output;
             }
 
-            @group(0) @binding(0) var<storage,read> buffer0: array<f32>;
+            @group(0) @binding(0) var<storage,read> buffer0: InputData;
 
             fn Line( p: vec2<f32>, a: vec2<f32>, b: vec2<f32> ) -> f32
             {
@@ -222,13 +244,19 @@ const init_webgpu = async (main: Main) => {
             fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
             {
                 //return fragData.color;
-                var colorR = buffer0[0];
+                var uv = vec2<f32>(fragData.position.x/buffer0.screen_x, fragData.position.y/buffer0.screen_y);
+                var ret = vec4<f32>(0.0);
 
-                var uv = vec2<f32>(fragData.position.x/1024, fragData.position.y/1024);
-                var k = Line(uv, vec2<f32>(0.3,0.1), vec2<f32>(0.8,0.5));
-                var thickness = 0.1;
-                var ratio = smoothstep(0.0, thickness, k);
-                return mix( vec4<f32>(colorR,0,0,1), vec4<f32>(0,0,0,1), ratio);
+                for (var i = 0; i < 2; i++) {
+                    var line_start = buffer0.lines[i].line_start.xy;
+                    var line_end = buffer0.lines[i].line_end.xy;
+                    var line_color = buffer0.lines[i].line_color.rgb;
+                    var k = Line(uv, line_start, line_end);
+                    var thickness = 0.01;
+                    var ratio = smoothstep(0.0, thickness, k);
+                    ret += mix( vec4<f32>(line_color,1), vec4<f32>(0,0,0,1), ratio);
+                }
+                return ret;
             }
         `,
     });
@@ -278,7 +306,6 @@ const init_webgpu = async (main: Main) => {
             },
         ],
     });
-
 
 
     let renderTarget: GPUTexture | undefined = undefined;
