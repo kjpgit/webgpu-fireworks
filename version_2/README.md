@@ -1,3 +1,19 @@
+## Overview
+
+### CPU
+
+Generates 400 tiles
+
+### Compute Shader
+
+Grabs a tile
+Writes output to storage
+
+
+### Fagment Shader
+
+Draws from storage
+
 
 ## Building
 
