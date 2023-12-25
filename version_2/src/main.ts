@@ -263,25 +263,15 @@ const init_webgpu = async (main: Main) => {
         ]
     });
 
+    const vertexBufferCPU = device.createBuffer({
+        size: MAX_BUFFER_SIZE,
+        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
+    });
 
-    const vertexBuffersDescriptors: GPUVertexBufferLayout[] = [
-        {
-            attributes: [
-                {
-                    shaderLocation: 0,
-                    offset: 0,
-                    format: "float32x4",
-                },
-                {
-                    shaderLocation: 1,
-                    offset: 16,
-                    format: "float32x4",
-                },
-            ],
-            arrayStride: 32,
-            stepMode: "vertex",
-        },
-    ];
+    const vertexBufferGPU = device.createBuffer({
+        size: MAX_BUFFER_SIZE,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
 
     // These are simple pass-through shaders, hopefully
     // I will try making more complex shaders in the future.
@@ -302,7 +292,6 @@ const init_webgpu = async (main: Main) => {
         vertex: {
             module: shaderModule,
             entryPoint: "vertex_main",
-            buffers: vertexBuffersDescriptors,
         },
         fragment: {
             module: shaderModule,
@@ -405,8 +394,7 @@ const init_webgpu = async (main: Main) => {
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, fragmentBG);
-        renderPass.setVertexBuffer(0, vertexBufferGPU);
-        renderPass.draw(cpu_buffer_wrapper.elements_used() / 8);
+        renderPass.draw(6);
         renderPass.end();
 
         device.queue.submit([encoder.finish()]);
