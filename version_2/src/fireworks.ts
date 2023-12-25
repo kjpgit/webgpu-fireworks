@@ -2,7 +2,12 @@ import { BufferWrapper, Vector3, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
-const VELOCITY = 0.3
+const LAUNCH_TIME_RANGE = [2.1, 2.7]
+const FLARE_VELOCITY_RANGE = [0.3, 0.5]
+const FLARE_DURATION_RANGE = [1.0, 4.0]
+const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
+const FLARE_SIZE_RANGE = [0.003, 0.005]
+const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
 const COLORS: Color4[] = [
@@ -17,7 +22,7 @@ const COLORS: Color4[] = [
 
 
 function get_random_color() : Color4 {
-    let i = Math.floor(random_range(0, COLORS.length))
+    let i = Math.floor(random_range([0, COLORS.length]))
     return COLORS[i]
 }
 
@@ -85,23 +90,23 @@ class Firework {
     readonly m_flares: Flare[]
 
     // Create a random firework
-    constructor(time: number, aspect_x: number) {
-        const pos_x = random_range(-0.8, 0.8)
-        const pos_y = random_range(0.0, 0.8)
+    constructor(time: number) {
+        const pos_x = random_range([-0.8, 0.8])
+        const pos_y = random_range([0.0, 0.8])
 
         // It's cool to set this at -0.2 and see the fireworks as they pop
         // through the back plane (if you also enable z velocity)
         const pos_z = 0.1
 
         this.pos = new Vector3(pos_x, pos_y, pos_z)
-        this.type = Math.floor(random_range(0, 2))
+        this.type = Math.floor(random_range([0, 2]))
         this.type = 1;
         this.start_time = time
         this.m_flares = new Array()
-        this.add_flares(aspect_x)
+        this.add_flares()
     }
 
-    add_flares(aspect_x: number) {
+    add_flares() {
         let count = 10
         let orig_color = get_random_color()
 
@@ -114,25 +119,21 @@ class Firework {
             // for now, don't animate z, to stay in device space
             velocity.z = 0
 
-            // Aspect correction.  Otherwise we get ovalish fireworks.
-            velocity.x *= aspect_x
-
-            // velocity variance
-            let speed_variance = random_range(1.0, 1.5)
-            velocity.x *= VELOCITY * speed_variance
-            velocity.y *= VELOCITY * speed_variance
+            let speed = random_range(FLARE_VELOCITY_RANGE)
+            velocity.x *= speed
+            velocity.y *= speed
 
             // color variance
             let color = orig_color.clone()
-            color.r += random_range(-0.3, 0.3)
-            color.b += random_range(-0.3, 0.3)
-            color.g += random_range(-0.3, 0.3)
+            color.r += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            color.b += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            color.g += random_range(FLARE_COLOR_VARIANCE_RANGE)
             //color.a = random_range(0.7, 4.0)
 
             // other variance
-            let duration_secs = random_range(1.0, 4.0)
-            let trail_secs = 0.5; //random_range(0.3, 0.7)
-            const size = random_range(0.003, 0.005)
+            let duration_secs = random_range(FLARE_DURATION_RANGE)
+            let trail_secs = random_range(FLARE_TRAIL_TIME_RANGE)
+            const size = random_range(FLARE_SIZE_RANGE)
 
             let f = new Flare(velocity, size, color, duration_secs, trail_secs)
             this.m_flares.push(f)
@@ -284,7 +285,7 @@ export class Scene
 
         if (time > this.next_launch) {
             this.launch_firework(time)
-            this.next_launch = time + random_range(2.1, 2.7)
+            this.next_launch = time + random_range(LAUNCH_TIME_RANGE)
         }
 
         for (const fw of this.m_fireworks) {
@@ -303,9 +304,9 @@ export class Scene
     }
 
     private launch_firework(current_time: number) {
-        let fw = new Firework(current_time, this.x_aspect_ratio)
+        let fw = new Firework(current_time)
         this.m_fireworks.push(fw)
-        while (this.m_fireworks.length > 1) {
+        while (this.m_fireworks.length > 10) {
             this.m_fireworks.shift()
         }
     }

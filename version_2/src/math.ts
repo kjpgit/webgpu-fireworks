@@ -22,7 +22,9 @@ function my_random(): number
 }
 
 // Return number in range [lower, upper)
-export function random_range(lower: number, upper: number): number {
+export function random_range(arr: number[]): number {
+    const lower = arr[0]
+    const upper = arr[1]
     if (lower > upper) {
         throw new Error("invalid range");
     }
@@ -48,8 +50,8 @@ gives better distribution than two random angles (which will produce more
 points clustered at the poles)
 */
 export function RandomUniformUnitVector2D(): Vector3 {
-    const angle = random_range(0.0, 2.0 * PI)
-    const r = Math.sqrt(random_range(0.0, 1.0))
+    const angle = random_range([0.0, 2.0 * PI])
+    const r = Math.sqrt(my_random())
     //const hemisphere = random_choose(-1.0, 1.0)
     //const z = Math.sqrt(1.0 - r*r) * hemisphere
     const z = 0.0;  // z is not needed for fireworks
