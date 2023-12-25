@@ -202,7 +202,7 @@ const init_webgpu = async (main: Main) => {
         canvas.height,
         100,  // nr_segments,
         99,
-        0, 0, 1, 0, // color
+        1, 0, 1, 0, // color
         99, 99, 99, 99, // fill
     ]);
 
@@ -256,8 +256,12 @@ const init_webgpu = async (main: Main) => {
             {
                 binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                //buffer: { type: "storage", },
-                storageTexture: { access: "write-only", format: "rgba8unorm", },
+                texture: { },
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: { type: "filtering" },
             },
         ],
     });
@@ -305,6 +309,11 @@ const init_webgpu = async (main: Main) => {
         label: 'fragment',
     });
 
+    const sampler = device.createSampler({
+        magFilter: 'linear',
+        minFilter: 'linear',
+    });
+
     // create render pipeline
     const pipeline = device.createRenderPipeline({
         layout: fragmentPL,
@@ -347,7 +356,8 @@ const init_webgpu = async (main: Main) => {
         entries: [
             { binding: 0, resource: { buffer: workBuffer, }, },
             //{ binding: 1, resource: { buffer: pixelBuffer, }, },
-            { binding: 1, resource: pixelBuffer.createView() }
+            { binding: 1, resource: pixelBuffer.createView() },
+            { binding: 2, resource: sampler }
         ],
     });
 

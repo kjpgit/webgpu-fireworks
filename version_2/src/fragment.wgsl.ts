@@ -9,6 +9,9 @@ struct VertexOut {
 
 @group(0) @binding(1) var g_output_pixels: texture_2d<f32>;
 
+@group(0) @binding(2) var mySampler: sampler;
+
+
 @fragment
 fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
 {
@@ -17,8 +20,8 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     //var idx = u32(y * f32(g_work_queue.screen_x) + x);
 
     //var ret = g_input_pixels[idx];
-
-    return vec4(0., 0., 1., 1.);
+    return textureSample(g_output_pixels, mySampler, vec2(x, y));
+    //return vec4(0., 1., 1., 1.);
 }
 
 @vertex
