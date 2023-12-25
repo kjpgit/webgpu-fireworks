@@ -202,7 +202,7 @@ const init_webgpu = async (main: Main) => {
         canvas.height,
         100,  // nr_segments,
         99,
-        1, 0, 1, 0, // color
+        1, 1, 0, 1, // color
         99, 99, 99, 99, // fill
     ]);
 
@@ -416,6 +416,7 @@ const init_webgpu = async (main: Main) => {
         computePass.setPipeline(computePipeline);
         computePass.setBindGroup(0, computeBG);
         computePass.dispatchWorkgroups(canvas.width, canvas.height, 1);
+        //computePass.dispatchWorkgroups(1);
         computePass.end();
 
         encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);

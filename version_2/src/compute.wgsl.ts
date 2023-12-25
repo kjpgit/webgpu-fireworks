@@ -19,7 +19,6 @@ struct LineWorkQueue {
 
 @group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
 
-//@group(0) @binding(2) var<storage, read_write> g_output_pixels: array<vec4<f32>>;
 @group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
 
 
@@ -31,10 +30,26 @@ fn compute_main(
 {
     var x = global_invocation_id.x;
     var y = global_invocation_id.y;
+    var color = g_work_queue.color;
 
-    //var idx = y * u32(g_work_queue.screen_x) + x;
-    //g_output_pixels[idx] = g_work_queue.color;
-    textureStore(g_output_pixels, vec2(x, y), g_work_queue.color);
+    var x_ratio = f32(x) / g_work_queue.screen_x;
+    var y_ratio = f32(y) / g_work_queue.screen_y;
+    color.r *= x_ratio;
+    color.g *= y_ratio;
+    //color.g *= (1-x_ratio);
+    //color.r *= 0.1;
+    //color.r = fract(x);
+
+    textureStore(g_output_pixels, vec2(x, y), color);
+    /*
+    for (var i = 0; i < i32(g_work_queue.screen_x); i++) {
+        for (var j = 0; j < i32(g_work_queue.screen_y); j++) {
+            textureStore(g_output_pixels, vec2(i, j), color);
+            color.g *= 0.90;
+        }
+        color.r *= 0.90;
+    }
+    */
 
     //var uv = vec2<f32>(x * 2/g_work_queue.screen_x - 1.,
                        ////y * -2/g_work_queue.screen_y + 1.);
