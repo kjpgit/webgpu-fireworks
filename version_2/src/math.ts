@@ -13,7 +13,7 @@ const MYRANDOM_VALS = [
 var g_rand_idx = 0;
 
 // Return number in range [0, 1)
-export function my_random(): number
+function my_random(): number
 {
     g_rand_idx += 1;
     let ret = MYRANDOM_VALS[g_rand_idx % MYRANDOM_VALS.length];
@@ -31,6 +31,14 @@ export function random_range(lower: number, upper: number): number {
     return ret
 }
 
+// If @value <= @min, return 0
+// If @value >= @max, return 1
+// If @value is between @min and @max, return a smooth interpolation between 0 and 1.
+export function smoothstep(min:number, max:number, value:number) {
+    var x = Math.max(0, Math.min(1, (value-min)/(max-min)));
+    return x * x * (3 - 2*x);
+}
+
 /*
 Return random 3D vector.  Length will be == 1.
 Source: gamedev.net
@@ -39,15 +47,12 @@ the sphere at that point.  It can use the top or bottom hemisphere for z.  This
 gives better distribution than two random angles (which will produce more
 points clustered at the poles)
 */
-export function RandomUniformUnitVector(): Vector3 {
+export function RandomUniformUnitVector2D(): Vector3 {
     const angle = random_range(0.0, 2.0 * PI)
     const r = Math.sqrt(random_range(0.0, 1.0))
-    const hemisphere = 1.0 // random_choose(-1.0, 1.0)
-    const z = Math.sqrt(1.0 - r*r) * hemisphere
+    //const hemisphere = random_choose(-1.0, 1.0)
+    //const z = Math.sqrt(1.0 - r*r) * hemisphere
+    const z = 0.0;  // z is not needed for fireworks
     return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
 }
 
-export function smoothstep (min:number, max:number, value:number) {
-  var x = Math.max(0, Math.min(1, (value-min)/(max-min)));
-  return x*x*(3 - 2*x);
-}

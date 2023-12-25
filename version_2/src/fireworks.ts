@@ -1,5 +1,5 @@
 import { BufferWrapper, Vector3, Color4  } from "./buffer.js";
-import { RandomUniformUnitVector, smoothstep, random_range } from "./math.js";
+import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const VELOCITY = 0.3
@@ -109,7 +109,7 @@ class Firework {
         //m_flares.reserveCapacity(count)
 
         for (let i = 0; i < count; i++) {
-            let velocity = RandomUniformUnitVector()
+            let velocity = RandomUniformUnitVector2D()
 
             // for now, don't animate z, to stay in device space
             velocity.z = 0
