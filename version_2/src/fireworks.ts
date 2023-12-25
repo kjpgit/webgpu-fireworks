@@ -3,10 +3,10 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const LAUNCH_TIME_RANGE = [2.1, 2.7]
-const FLARE_VELOCITY_RANGE = [0.3, 0.5]
+const FLARE_VELOCITY_RANGE = [0.3, 0.5]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
-const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
-const FLARE_SIZE_RANGE = [0.003, 0.005]
+//const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
+const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
@@ -115,10 +115,6 @@ class Firework {
 
         for (let i = 0; i < count; i++) {
             let velocity = RandomUniformUnitVector2D()
-
-            // for now, don't animate z, to stay in device space
-            velocity.z = 0
-
             let speed = random_range(FLARE_VELOCITY_RANGE)
             velocity.x *= speed
             velocity.y *= speed
@@ -131,9 +127,10 @@ class Firework {
             //color.a = random_range(0.7, 4.0)
 
             // other variance
-            let duration_secs = random_range(FLARE_DURATION_RANGE)
-            let trail_secs = random_range(FLARE_TRAIL_TIME_RANGE)
+            const duration_secs = random_range(FLARE_DURATION_RANGE)
             const size = random_range(FLARE_SIZE_RANGE)
+            //let trail_secs = random_range(FLARE_TRAIL_TIME_RANGE)
+            const trail_secs = size * 10;
 
             let f = new Flare(velocity, size, color, duration_secs, trail_secs)
             this.m_flares.push(f)
