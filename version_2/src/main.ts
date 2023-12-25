@@ -199,7 +199,7 @@ const init_webgpu = async (main: Main) => {
         canvas.height,
         100,  // nr_segments,
         99,
-        1, 1, 0, 1, // color
+        1, 1, 1, 1, // color
         99, 99, 99, 99, // fill
     ]);
 

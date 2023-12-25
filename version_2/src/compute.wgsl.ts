@@ -36,6 +36,7 @@ fn compute_main(
     var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
     color.r = step(0.99, abs(x_ratio));
     color.g = step(0.99, abs(y_ratio));
+    color.b *= abs(x_ratio);
 
     textureStore(g_output_pixels, vec2(x, y), color);
 
