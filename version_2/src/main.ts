@@ -200,7 +200,8 @@ const init_webgpu = async (main: Main) => {
         canvas.width,
         canvas.height,
         100,  // nr_segments,
-        1, 1, 0, 1, // color
+        99,
+        0, 0, 1, 0, // color
         99, 99, 99, 99, // fill
     ]);
 
@@ -392,8 +393,8 @@ const init_webgpu = async (main: Main) => {
         const result = new Float32Array(resultBuffer.getMappedRange().slice());
         resultBuffer.unmap();
 
-        console.log('input', compute_input_js);
-        console.log('result', result);
+        //console.log('input', compute_input_js);
+        //console.log('result', result);
 
         //requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
     }

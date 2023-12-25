@@ -9,6 +9,7 @@ struct LineWorkQueue {
     screen_x: f32,
     screen_y: f32,
     nr_segments: f32,
+    unused: f32,
     color: vec4<f32>,
 };
 
