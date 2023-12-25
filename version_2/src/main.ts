@@ -156,40 +156,14 @@ const init_webgpu = async (main: Main) => {
 
 
     // COMPUTE SHADER
-    const computeBGL = device.createBindGroupLayout({
-        entries: [
-            {
-                binding: 0,  // global constants - read only
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: { type: "uniform", },
-            },
-            {
-                binding: 1,  // line segments - read only
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: { type: "storage", },
-            },
-            {
-                binding: 2,  // full screen texture to write to
-                visibility: GPUShaderStage.COMPUTE,
-                storageTexture: { access: "write-only", format: "rgba8unorm", },
-            },
-        ],
-    });
-
-    const computePL = device.createPipelineLayout({
-        bindGroupLayouts: [
-            computeBGL, // @group(0)
-        ]
-    });
 
     const computeModule = device.createShaderModule({
         label: 'computeModule',
         code: ComputeCode,
     });
 
-
     const computePipeline = device.createComputePipeline({
-        layout: computePL,
+        layout: 'auto',
         compute: { module: computeModule, entryPoint: 'compute_main',
         },
     });
@@ -226,41 +200,34 @@ const init_webgpu = async (main: Main) => {
     })
 
     const computeBG = device.createBindGroup({
-        layout: computeBGL,
+        layout: computePipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: constantsBuffer } },
-            { binding: 1, resource: { buffer: segmentBuffer } },
+            //{ binding: 1, resource: { buffer: segmentBuffer } },
             { binding: 2, resource: colorTexture.createView() }
         ],
     });
 
 
 
-    // FRAGMENT
-    const fragmentBGL = device.createBindGroupLayout({
-        entries: [
-            {
-                binding: 0,  // global constants - read only
-                visibility: GPUShaderStage.FRAGMENT,
-                buffer: { type: "uniform", },
-            },
-            {
-                binding: 1, // full screen texture to read from
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: { },
-            },
-            {
-                binding: 2, // texture sampler
-                visibility: GPUShaderStage.FRAGMENT,
-                sampler: { type: "filtering" },
-            },
-        ],
+    // Render pipeline (simple quad vertex and fragment shader)
+    const shaderModule = device.createShaderModule({
+        code: FragmentCode,
+        label: 'fragment',
     });
 
-    const fragmentPL = device.createPipelineLayout({
-        bindGroupLayouts: [
-            fragmentBGL, // @group(0)
-        ]
+    const renderPipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: {
+            module: shaderModule,
+            entryPoint: "vertex_main",
+        },
+        fragment: {
+            module: shaderModule,
+            entryPoint: "fragment_main",
+            targets: [ { format: presentationFormat, }, ],
+        },
+        primitive: { topology: "triangle-list", },
     });
 
     const vertexBufferCPU = device.createBuffer({
@@ -273,59 +240,15 @@ const init_webgpu = async (main: Main) => {
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    // These are simple pass-through shaders, hopefully
-    // I will try making more complex shaders in the future.
-    //
-    const shaderModule = device.createShaderModule({
-        code: FragmentCode,
-        label: 'fragment',
-    });
-
     const sampler = device.createSampler({
         magFilter: 'linear',
         minFilter: 'linear',
     });
 
-    // create render pipeline
-    const pipeline = device.createRenderPipeline({
-        layout: fragmentPL,
-        vertex: {
-            module: shaderModule,
-            entryPoint: "vertex_main",
-        },
-        fragment: {
-            module: shaderModule,
-            entryPoint: "fragment_main",
-            targets: [
-                {
-                    format: presentationFormat,
-                    /*
-                    blend: {
-                        color: {
-                            operation: "add",
-                            srcFactor: "src-alpha",
-                            dstFactor: "one-minus-src-alpha",
-                        },
-                        alpha: {  // not sure if we need this
-                            operation: "add",
-                            srcFactor: "src-alpha",
-                            dstFactor: "one-minus-src-alpha",
-                        }
-                    }
-                   */
-                },
-            ],
-        },
-        primitive: {
-            topology: "triangle-list",
-        },
-        multisample: { count: 1, },
-    });
-
-    const fragmentBG = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
+    const renderBG = device.createBindGroup({
+        layout: renderPipeline.getBindGroupLayout(0),
         entries: [
-            { binding: 0, resource: { buffer: constantsBuffer, }, },
+            //{ binding: 0, resource: { buffer: constantsBuffer, }, },
             { binding: 1, resource: colorTexture.createView() },
             { binding: 2, resource: sampler }
         ],
@@ -392,8 +315,8 @@ const init_webgpu = async (main: Main) => {
         //encoder.copyBufferToBuffer(constantsBuffer, 0, resultBuffer, 0, resultBuffer.size);
 
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
-        renderPass.setPipeline(pipeline);
-        renderPass.setBindGroup(0, fragmentBG);
+        renderPass.setPipeline(renderPipeline);
+        renderPass.setBindGroup(0, renderBG);
         renderPass.draw(6);
         renderPass.end();
 

@@ -17,7 +17,7 @@ struct LineWorkQueue {
 
 @group(0) @binding(0) var<uniform> g_work_queue: LineWorkQueue;
 
-@group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
+//@group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
 
 @group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
 
@@ -37,6 +37,7 @@ fn compute_main(
     color.r = step(0.99, abs(x_ratio));
     color.g = step(0.99, abs(y_ratio));
     color.b *= abs(x_ratio);
+    //color.b *= g_line_segments[0].color_end.r;
 
     textureStore(g_output_pixels, vec2(x, y), color);
 

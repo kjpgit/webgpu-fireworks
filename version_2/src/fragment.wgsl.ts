@@ -1,14 +1,5 @@
 export var FragmentCode = `
 
-// struct LineWorkQueue {
-//     screen_x: f32,
-//     screen_y: f32,
-//     nr_segments: f32,
-//     unused: f32,
-//     color: vec4<f32>,
-// };
-//
-// @group(0) @binding(0) var<uniform> g_work_queue: LineWorkQueue;
 @group(0) @binding(1) var myTexture: texture_2d<f32>;
 @group(0) @binding(2) var mySampler: sampler;
 
