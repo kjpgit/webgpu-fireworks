@@ -279,7 +279,7 @@ export class Scene
         this.x_aspect_ratio = height / width
     }
 
-    draw(buffer: BufferWrapper, ub: BufferWrapper, time: number)
+    draw(buffer: BufferWrapper, time: number)
     {
         time = Math.floor(time * 60) / 60
         //console.log(time)
@@ -292,11 +292,11 @@ export class Scene
         this.drawFullQuad(buffer)
 
         for (const fw of this.m_fireworks) {
-            fw.draw(time, ub)
+            //fw.draw(time, ub)
         }
 
-        if (ub.bytes_used() > this.stats_max_buffer) {
-            this.stats_max_buffer = ub.bytes_used()
+        if (buffer.bytes_used() > this.stats_max_buffer) {
+            this.stats_max_buffer = buffer.bytes_used()
         }
 
         if (this.next_stats < time) {
