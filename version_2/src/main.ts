@@ -156,9 +156,20 @@ const init_webgpu = async (main: Main) => {
 
 
     // COMPUTE SHADER
-    const computeShader = device.createShaderModule({
+    const computeModule = device.createShaderModule({
         code: ComputeCode,
     });
+
+    const computePipeline = device.createComputePipeline({
+        layout: 'auto',
+        compute: {
+            module: computeModule,
+            entryPoint: 'compute_main',
+        },
+    });
+
+    const compute_input_js = new Float32Array([1, 3, 5]);
+
 
     const bindGroupLayoutCompute = device.createBindGroupLayout({
         entries: [
@@ -171,6 +182,7 @@ const init_webgpu = async (main: Main) => {
             },
         ],
     });
+
 
     const buffer0 = device.createBuffer({
       size: MAX_BUFFER_SIZE,
@@ -255,8 +267,18 @@ const init_webgpu = async (main: Main) => {
         multisample: { count: 1, },
     });
 
-    const uniformBindGroup = device.createBindGroup({
+    const uniformBG = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: { buffer: buffer0, },
+            },
+        ],
+    });
+
+    const computeBG = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(1),
         entries: [
             {
                 binding: 0,
@@ -321,9 +343,15 @@ const init_webgpu = async (main: Main) => {
         commandEncoder.copyBufferToBuffer(vertexBufferCPU, 0, vertexBufferGPU, 0, cpu_buffer_bytes_used)
         commandEncoder.copyBufferToBuffer(uniformBufferCPU, 0, buffer0, 0, uniform_buffer_bytes_used)
 
+        const computePass = encoder.beginComputePass()
+        computePass.setPipeline(pipeline);
+        computePass.setBindGroup(1, computeBG);
+        computePass.dispatchWorkgroups(3);
+        computePass.end();
+
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline);
-        passEncoder.setBindGroup(0, uniformBindGroup);
+        passEncoder.setBindGroup(0, uniformBG);
         passEncoder.setVertexBuffer(0, vertexBufferGPU);
         passEncoder.draw(cpu_buffer_wrapper.elements_used() / 8);
         passEncoder.end();
