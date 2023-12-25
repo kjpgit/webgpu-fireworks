@@ -49,11 +49,14 @@ fn compute_main(
     if (true) {
         // Rasterize line segments
         var position = vec2<f32>(x_ratio, y_ratio);
-        for (var i = 0u; i < arrayLength(&g_line_segments); i++) {
-            var distance = line_sdf(position, g_line_segments[i].line_start, g_line_segments[i].line_end);
-            var color = g_line_segments[i].color_start;
-            color.b *= distance;
-            textureStore(g_output_pixels, vec2(x, y), color);
+        var num_segments = 100u;
+        for (var i = 0u; i < num_segments; i++) {
+            if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
+                var distance = line_sdf(position, g_line_segments[i].line_start, g_line_segments[i].line_end, 1.9);
+                var color = g_line_segments[i].color_start;
+                color.b *= distance;
+                textureStore(g_output_pixels, vec2(x, y), color);
+            }
         }
     }
 }

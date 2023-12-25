@@ -189,7 +189,7 @@ const init_webgpu = async (main: Main) => {
 
     const segmentBufferGPU = device.createBuffer({
         size: main.MAX_SEGMENT_BUFFER_SIZE,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
     const colorTexture = device.createTexture({
