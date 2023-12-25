@@ -50,7 +50,7 @@ fn compute_main(
         //var num_segments = 1000u;
         var num_segments = arrayLength(&g_line_segments);
         var thickness = 2.;
-        var color = vec4<f32>(0., 0., 0., 1.);
+        var color = vec4<f32>(0., 0., 0., 0.);
         for (var i = 0u; i < num_segments; i++) {
             //if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
             if (true) {
@@ -58,7 +58,10 @@ fn compute_main(
                 var ratio = 1.0 - smoothstep(0.0, thickness * g_line_segments[i].size, distance);
                 var new_color = g_line_segments[i].color_start;
                 new_color *= ratio;
-                color = max(color, new_color);
+                new_color.r *= new_color.a;
+                new_color.g *= new_color.a;
+                new_color.b *= new_color.a;
+                color += new_color;
             }
         }
         textureStore(g_output_pixels, vec2(x, y), color);
