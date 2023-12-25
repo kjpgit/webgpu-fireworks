@@ -10,6 +10,12 @@ const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
+const DEBUG_COLORS: Color4[] = [
+    new Color4(1.0, 0.0, 0.0, 1.0),
+    new Color4(0.0, 1.0, 0.0, 1.0),
+    new Color4(0.0, 0.0, 1.0, 1.0),
+]
+
 const COLORS: Color4[] = [
     new Color4(1.0, 0.0, 0.0, 1.0),
     new Color4(0.0, 1.0, 0.0, 1.0),
@@ -107,8 +113,9 @@ class Firework {
     }
 
     add_flares() {
-        let count = 10
+        let count = 1
         let orig_color = get_random_color()
+        let orig_color2 = get_random_color()
 
         // Reserve exact storage space.  It saves a bit of wasted memory.
         //m_flares.reserveCapacity(count)
@@ -121,9 +128,9 @@ class Firework {
 
             // color variance
             let color = orig_color.clone()
-            color.r += random_range(FLARE_COLOR_VARIANCE_RANGE)
-            color.b += random_range(FLARE_COLOR_VARIANCE_RANGE)
-            color.g += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            //color.r += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            //color.b += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            //color.g += random_range(FLARE_COLOR_VARIANCE_RANGE)
             //color.a = random_range(0.7, 4.0)
 
             // other variance

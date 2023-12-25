@@ -51,7 +51,7 @@ fn compute_main(
         // Rasterize line segments
         var position = vec2<f32>(x_ratio, y_ratio);
         var num_segments = 1000u;
-        var thickness = 7.;
+        var thickness = 2.;
         var color = vec4<f32>(0., 0., 0., 1.);
         for (var i = 0u; i < num_segments; i++) {
             //if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
