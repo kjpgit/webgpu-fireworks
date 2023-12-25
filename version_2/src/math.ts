@@ -1,17 +1,33 @@
 import { Vector3  } from "./buffer.js";
 
 const PI = 3.1415926535
-const RANDOM_RANGE_DEBUG = false
 
-// Return Int in range [lower, upper)
+const MYRANDOM_VALS = [
+    0.0, 0.25, 0.50, 0.75, 0.99999999,
+    0.1, 0.35, 0.45, 0.85,
+    0.2, 0.45, 0.55, 0.95,
+    0.3, 0.6, 0.9,
+    0.16, 0.33, 0.66, 0.83,
+]
+
+var g_rand_idx = 0;
+
+// Return number in range [0, 1)
+export function my_random(): number
+{
+    g_rand_idx += 1;
+    let ret = MYRANDOM_VALS[g_rand_idx % MYRANDOM_VALS.length];
+    //console.log("my_random: " + ret);
+    return ret;
+}
+
+// Return number in range [lower, upper)
 export function random_range(lower: number, upper: number): number {
-    //precondition(lower <= upper)
-    //if RANDOM_RANGE_DEBUG { return random_choose(lower, upper); }
+    if (lower > upper) {
+        throw new Error("invalid range");
+    }
     let delta = upper - lower
-    let ret = (Math.random() * delta) + lower
-    //console.log(`random ${lower} ${upper} = ${ret}`)
-    //precondition(ret >= lower)
-    //precondition(ret <= upper)
+    let ret = (my_random() * delta) + lower
     return ret
 }
 

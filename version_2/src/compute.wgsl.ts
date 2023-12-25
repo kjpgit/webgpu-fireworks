@@ -36,6 +36,7 @@ fn compute_main(
 
     var x_ratio = f32(x) * 2. / g_work_queue.screen_x - 1.;
     var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
+    y_ratio *= -1.0;
 
     if (false) {
         // Screen test pattern
@@ -50,12 +51,16 @@ fn compute_main(
         // Rasterize line segments
         var position = vec2<f32>(x_ratio, y_ratio);
         var num_segments = 1000u;
+        var thickness = 7.;
         var color = vec4<f32>(0., 0., 0., 1.);
         for (var i = 0u; i < num_segments; i++) {
-            if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
+            //if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
+            if (true) {
                 var distance = line_sdf(position, g_line_segments[i].line_start, g_line_segments[i].line_end, 1.9);
-                color = g_line_segments[i].color_start;
-                color.b *= distance;
+                var ratio = 1.0 - smoothstep(0.0, thickness * g_line_segments[i].size, distance);
+                var new_color = g_line_segments[i].color_start;
+                new_color *= ratio;
+                color = max(color, new_color);
             }
         }
         textureStore(g_output_pixels, vec2(x, y), color);

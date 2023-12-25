@@ -102,7 +102,7 @@ class Firework {
     }
 
     add_flares(aspect_x: number) {
-        let count = 400
+        let count = 10
         let orig_color = get_random_color()
 
         // Reserve exact storage space.  It saves a bit of wasted memory.
