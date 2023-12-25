@@ -19,7 +19,8 @@ struct LineWorkQueue {
 
 @group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
 
-@group(0) @binding(2) var<storage, read_write> g_output_pixels: array<vec4<f32>>;
+//@group(0) @binding(2) var<storage, read_write> g_output_pixels: array<vec4<f32>>;
+@group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
 
 
 @compute @workgroup_size(1)
@@ -31,8 +32,9 @@ fn compute_main(
     var x = global_invocation_id.x;
     var y = global_invocation_id.y;
 
-    var idx = y * u32(g_work_queue.screen_x) + x;
-    g_output_pixels[idx] = g_work_queue.color;
+    //var idx = y * u32(g_work_queue.screen_x) + x;
+    //g_output_pixels[idx] = g_work_queue.color;
+    textureStore(g_output_pixels, vec2(x, y), g_work_queue.color);
 
     //var uv = vec2<f32>(x * 2/g_work_queue.screen_x - 1.,
                        ////y * -2/g_work_queue.screen_y + 1.);

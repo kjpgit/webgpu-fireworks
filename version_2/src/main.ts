@@ -176,7 +176,8 @@ const init_webgpu = async (main: Main) => {
             {
                 binding: 2,
                 visibility: GPUShaderStage.COMPUTE,
-                buffer: { type: "storage", },
+                //buffer: { type: "storage", },
+                storageTexture: { access: "write-only", format: "rgba8unorm", },
             },
         ],
     });
@@ -221,23 +222,52 @@ const init_webgpu = async (main: Main) => {
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
-    const pixelBuffer = device.createBuffer({
-        size: canvas.width * canvas.height * 4,
-        usage: GPUBufferUsage.STORAGE,
-    });
+    //const pixelBuffer = device.createBuffer({
+        //size: canvas.width * canvas.height * 4,
+        //usage: GPUBufferUsage.STORAGE,
+    //});
+    const pixelBuffer = device.createTexture({
+        size: [canvas.width, canvas.height, 1],
+        format: "rgba8unorm",
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
+    })
 
     const computeBG = device.createBindGroup({
         layout: computeBGL,
         entries: [
             { binding: 0, resource: { buffer: workBuffer } },
             { binding: 1, resource: { buffer: segmentBuffer } },
-            { binding: 2, resource: { buffer: pixelBuffer } },
+            //{ binding: 2, resource: { texture: pixelBuffer } },
+            { binding: 2, resource: pixelBuffer.createView() }
+
         ],
     });
 
 
 
     // FRAGMENT
+    const fragmentBGL = device.createBindGroupLayout({
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: { type: "storage", },
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                //buffer: { type: "storage", },
+                storageTexture: { access: "write-only", format: "rgba8unorm", },
+            },
+        ],
+    });
+
+    const fragmentPL = device.createPipelineLayout({
+        bindGroupLayouts: [
+            fragmentBGL, // @group(0)
+        ]
+    });
+
     const vertexBufferCPU = device.createBuffer({
         size: MAX_BUFFER_SIZE,
         usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
@@ -277,7 +307,7 @@ const init_webgpu = async (main: Main) => {
 
     // create render pipeline
     const pipeline = device.createRenderPipeline({
-        layout: "auto",
+        layout: fragmentPL,
         vertex: {
             module: shaderModule,
             entryPoint: "vertex_main",
@@ -316,7 +346,8 @@ const init_webgpu = async (main: Main) => {
         layout: pipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: workBuffer, }, },
-            { binding: 1, resource: { buffer: pixelBuffer, }, },
+            //{ binding: 1, resource: { buffer: pixelBuffer, }, },
+            { binding: 1, resource: pixelBuffer.createView() }
         ],
     });
 
