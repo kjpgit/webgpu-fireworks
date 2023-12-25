@@ -3,7 +3,7 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const LAUNCH_TIME_RANGE = [2.1, 2.7]
-const NUM_FLARES = 20
+const NUM_FLARES = 100
 const FLARE_VELOCITY_RANGE = [0.3, 0.5]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
@@ -151,7 +151,7 @@ class Firework {
         return (time - this.start_time)
     }
 
-    draw(time: number, buffer: BufferWrapper) {
+    draw(time: number, aspect_ratio: number, buffer: BufferWrapper) {
         let secs = this.getSecondsElapsed(time)
         //console.log(`num_flares ${this.m_flares.length} secs ${secs}`)
         if (this.type == 0) {
@@ -163,7 +163,7 @@ class Firework {
         } else {
             // long trail
             for (const flare of this.m_flares) {
-                this.render_flare_trail(flare, secs, buffer)
+                this.render_flare_trail(flare, secs, buffer, aspect_ratio)
             }
         }
     }
@@ -185,7 +185,7 @@ class Firework {
     }
 
 
-    private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper)
+    private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper, aspect_ratio: number)
     {
         let local_secs = secs
         if (local_secs > flare.duration_secs) {
@@ -199,6 +199,7 @@ class Firework {
         while (local_secs >= 0 && trail_secs <= flare.trail_secs) {
             let position = flare.pointAtTime(local_secs, this.pos)
             let color = flare.colorAtTime(local_secs)
+            position.x *= aspect_ratio;
 
             buffer.append_raw(position.x)
             buffer.append_raw(position.y)
@@ -272,7 +273,7 @@ export class Scene
         }
 
         for (const fw of this.m_fireworks) {
-            fw.draw(time, buffer)
+            fw.draw(time, this.x_aspect_ratio, buffer)
         }
 
         if (buffer.bytes_used() > this.stats_max_buffer) {

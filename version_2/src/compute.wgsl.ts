@@ -47,7 +47,8 @@ fn compute_main(
     if (true) {
         // Rasterize line segments
         var position = vec2<f32>(x_ratio, y_ratio);
-        var num_segments = 1000u;
+        //var num_segments = 1000u;
+        var num_segments = arrayLength(&g_line_segments);
         var thickness = 2.;
         var color = vec4<f32>(0., 0., 0., 1.);
         for (var i = 0u; i < num_segments; i++) {

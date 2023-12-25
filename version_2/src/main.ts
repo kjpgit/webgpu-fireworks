@@ -203,15 +203,6 @@ const init_webgpu = async (main: Main) => {
 //        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
 //    });
 
-    const computeBG = device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: { buffer: constantsBuffer } },
-            { binding: 1, resource: { buffer: segmentBufferGPU } },
-            { binding: 2, resource: colorTexture.createView() }
-        ],
-    });
-
 
 
     // Render pipeline (simple quad vertex and fragment shader)
@@ -294,6 +285,16 @@ const init_webgpu = async (main: Main) => {
 
         const computePass = encoder.beginComputePass()
         computePass.setPipeline(computePipeline);
+
+        const computeBG = device.createBindGroup({
+            layout: computePipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: constantsBuffer } },
+                { binding: 1, resource: { buffer: segmentBufferGPU, size: cpu_buffer_bytes_used } },
+                { binding: 2, resource: colorTexture.createView() }
+            ],
+        });
+
         computePass.setBindGroup(0, computeBG);
         computePass.dispatchWorkgroups(Math.ceil(canvas.width/4), Math.ceil(canvas.height/8), 1);
         //computePass.dispatchWorkgroups(1);

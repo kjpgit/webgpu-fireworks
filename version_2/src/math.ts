@@ -15,8 +15,9 @@ var g_rand_idx = 0;
 // Return number in range [0, 1)
 function my_random(): number
 {
-    g_rand_idx += 1;
-    let ret = MYRANDOM_VALS[g_rand_idx % MYRANDOM_VALS.length];
+    //g_rand_idx += 1;
+    //let ret = MYRANDOM_VALS[g_rand_idx % MYRANDOM_VALS.length];
+    let ret = Math.random();
     //console.log("my_random: " + ret);
     return ret;
 }
