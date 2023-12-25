@@ -3,6 +3,7 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const LAUNCH_TIME_RANGE = [2.1, 2.7]
+const NUM_FLARES = 20
 const FLARE_VELOCITY_RANGE = [0.3, 0.5]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
@@ -110,17 +111,16 @@ class Firework {
         this.type = 1;
         this.start_time = time
         this.m_flares = new Array()
-        this.add_flares()
+        this.add_flares(NUM_FLARES)
     }
 
-    add_flares() {
-        let count = 1
+    add_flares(num_flares: number) {
         let orig_color = get_random_color()
 
         // Reserve exact storage space.  It saves a bit of wasted memory.
         //m_flares.reserveCapacity(count)
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector2D()
             let speed = random_range(FLARE_VELOCITY_RANGE)
             velocity.x *= speed

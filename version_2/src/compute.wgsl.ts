@@ -2,12 +2,9 @@ export var ComputeCode = `
 
 struct LineSegment {
     line_start: vec2<f32>,
-    line_end: vec2<f32>,
-    color_start: vec4<f32>,
     size: f32,
     una: f32,
-    unb: f32,
-    unc: f32,
+    color_start: vec4<f32>,
 };
 
 struct LineWorkQueue {
@@ -56,7 +53,7 @@ fn compute_main(
         for (var i = 0u; i < num_segments; i++) {
             //if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
             if (true) {
-                var distance = line_sdf(position, g_line_segments[i].line_start, g_line_segments[i].line_end, 1.9);
+                var distance = point_sdf(position, g_line_segments[i].line_start, 1.9);
                 var ratio = 1.0 - smoothstep(0.0, thickness * g_line_segments[i].size, distance);
                 var new_color = g_line_segments[i].color_start;
                 new_color *= ratio;
@@ -65,6 +62,12 @@ fn compute_main(
         }
         textureStore(g_output_pixels, vec2(x, y), color);
     }
+}
+
+fn point_sdf( p: vec2<f32>, a: vec2<f32>, aspect: f32 ) -> f32
+{
+    var pa = p-a;
+    return length(pa);
 }
 
 fn line_sdf( p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, aspect: f32 ) -> f32
