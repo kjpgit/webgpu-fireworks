@@ -187,35 +187,32 @@ class Firework {
 
     private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper, aspect_ratio: number)
     {
-        let local_secs = secs
-        if (local_secs > flare.duration_secs) {
+        if (secs > flare.duration_secs) {
             return
         }
 
-        let nr_segments = 0;
-        let trail_secs = 0
         let size = flare.size;
+        let end_position = flare.pointAtTime(secs, this.pos)
+        let end_color = flare.colorAtTime(secs)
 
-        while (local_secs >= 0 && trail_secs <= flare.trail_secs) {
-            let position = flare.pointAtTime(local_secs, this.pos)
-            let color = flare.colorAtTime(local_secs)
-            position.x *= aspect_ratio;
+        let start_time = Math.max(secs - flare.trail_secs, 0)
+        let start_position = flare.pointAtTime(start_time, this.pos)
+        let start_color = flare.colorAtTime(start_time)
 
-            buffer.append_raw(position.x)
-            buffer.append_raw(position.y)
-            buffer.append_raw(size);
-            buffer.append_raw(0.0);
-            buffer.append_raw_color4(color)
+        end_position.x *= aspect_ratio;
+        start_position.x *= aspect_ratio;
 
-            // todo: make point smaller at end
+        buffer.append_raw(end_position.x)
+        buffer.append_raw(end_position.y)
+        buffer.append_raw(size);
+        buffer.append_raw(0.0);
+        buffer.append_raw_color4(end_color)
 
-            size *= 0.95
-            color.a *= 0.9;
-
-            // go to previous particle on trail
-            local_secs -= FLARE_TRAIL_STEP_SECS
-            trail_secs += FLARE_TRAIL_STEP_SECS
-        }
+        buffer.append_raw(start_position.x)
+        buffer.append_raw(start_position.y)
+        buffer.append_raw(size);
+        buffer.append_raw(0.0);
+        buffer.append_raw_color4(start_color)
     }
 }
 
