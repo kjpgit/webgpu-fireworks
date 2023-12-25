@@ -1,4 +1,4 @@
-import { BufferWrapper, Vector3, Color4  } from "./buffer.js";
+import { BufferWrapper, Vector2, Vector3, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
@@ -9,7 +9,6 @@ const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
 const FLARE_SIZE_RANGE = [0.005, 0.019]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
-const FLARE_TRAIL_STEP_SECS = 1/60
 const GRAVITY = -0.04
 
 const DEBUG_COLORS: Color4[] = [
@@ -42,6 +41,17 @@ function _get_flight(vel: number, secs: number) : number {
     return t * vel
 }
 
+class RenderPoint {
+    readonly position: Vector2
+    readonly size: number
+    readonly color: Color4
+
+    constructor(position: Vector2, size: number, color: Color4) {
+        this.position = position
+        this.size = size
+        this.color = color
+    }
+}
 
 
 // A single projectile / point of light
@@ -151,7 +161,7 @@ class Firework {
         return (time - this.start_time)
     }
 
-    draw(time: number, aspect_ratio: number, buffer: BufferWrapper) {
+    draw(time: number, aspect_ratio: number, points: RenderPoint[]) {
         let secs = this.getSecondsElapsed(time)
         //console.log(`num_flares ${this.m_flares.length} secs ${secs}`)
         if (this.type == 0) {
@@ -163,12 +173,12 @@ class Firework {
         } else {
             // long trail
             for (const flare of this.m_flares) {
-                this.render_flare_trail(flare, secs, buffer, aspect_ratio)
+                this.render_flare_trail(flare, secs, points, aspect_ratio)
             }
         }
     }
 
-    private render_flare_simple(flare: Flare, secs: number, buffer: BufferWrapper)
+    private render_flare_simple(flare: Flare, secs: number, points: BufferWrapper)
     {
         if (secs > flare.duration_secs) {
             return
@@ -180,12 +190,12 @@ class Firework {
             color.a = 1.0
         }
         let size = flare.size
-        draw_triangle_2d(buffer, p, size, size, color)
-        draw_triangle_2d(buffer, p, size, -size, color)
+        //draw_triangle_2d(buffer, p, size, size, color)
+        //draw_triangle_2d(buffer, p, size, -size, color)
     }
 
 
-    private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper, aspect_ratio: number)
+    private render_flare_trail(flare: Flare, secs: number, points: RenderPoint[], aspect_ratio: number)
     {
         if (secs > flare.duration_secs) {
             return
@@ -202,17 +212,20 @@ class Firework {
         end_position.x *= aspect_ratio;
         start_position.x *= aspect_ratio;
 
-        buffer.append_raw(end_position.x)
-        buffer.append_raw(end_position.y)
-        buffer.append_raw(size);
-        buffer.append_raw(0.0);
-        buffer.append_raw_color4(end_color)
+        points.push(new RenderPoint(end_position, size, end_color))
+        points.push(new RenderPoint(start_position, size, start_color))
 
-        buffer.append_raw(start_position.x)
-        buffer.append_raw(start_position.y)
-        buffer.append_raw(size);
-        buffer.append_raw(0.0);
-        buffer.append_raw_color4(start_color)
+        //buffer.append_raw(end_position.x)
+        //buffer.append_raw(end_position.y)
+        //buffer.append_raw(size);
+        //buffer.append_raw(0.0);
+        //buffer.append_raw_color4(end_color)
+
+        //buffer.append_raw(start_position.x)
+        //buffer.append_raw(start_position.y)
+        //buffer.append_raw(size);
+        //buffer.append_raw(0.0);
+        //buffer.append_raw_color4(start_color)
     }
 }
 
@@ -269,8 +282,17 @@ export class Scene
             this.next_launch = time + random_range(LAUNCH_TIME_RANGE)
         }
 
+        var points: RenderPoint[] = []
         for (const fw of this.m_fireworks) {
-            fw.draw(time, this.x_aspect_ratio, buffer)
+            fw.draw(time, this.x_aspect_ratio, points)
+        }
+
+        for (const point of points) {
+            buffer.append_raw(point.position.x)
+            buffer.append_raw(point.position.y)
+            buffer.append_raw(point.size);
+            buffer.append_raw(0.0);
+            buffer.append_raw_color4(point.color)
         }
 
         if (buffer.bytes_used() > this.stats_max_buffer) {

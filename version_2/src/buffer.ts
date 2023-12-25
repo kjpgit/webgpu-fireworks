@@ -88,6 +88,24 @@ export class Vector3 {
    */
 }
 
+export class Vector2 {
+    x: number = 0
+    y: number = 0
+
+    constructor(x: number, y: number) {
+        this.x = x
+        this.y = y
+    }
+
+    clone(): Vector2 {
+        return new Vector2(this.x, this.y);
+    }
+
+    toString(): string {
+        return `x:${this.x}, y:${this.y}`;
+    }
+}
+
 
 export class Color4 {
     r: number = 0
