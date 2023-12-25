@@ -2,6 +2,7 @@ import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
+const WORKGROUP_SIZE = 256
 const LAUNCH_TIME_RANGE = [2.1, 2.7]
 const NUM_FLARES = 100
 const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
@@ -52,7 +53,8 @@ class RenderPoint {
         this.position = position
         this.size = size
         this.color = color
-        this.workgroup = 0
+        this.workgroup = Math.floor(this.position.x * WORKGROUP_SIZE);
+        //console.log("workgroup: " + this.workgroup);
     }
 }
 
@@ -240,7 +242,7 @@ export class Scene
 
     constructor() {
         this.m_fireworks = new Array();
-        this.next_launch = 0.3;
+        this.next_launch = 0;
     }
 
     set_screen_size(width: number, height: number) {
@@ -249,7 +251,7 @@ export class Scene
 
     draw(buffer: BufferWrapper, time: number)
     {
-        time = Math.floor(time * 60) / 60
+        //time = Math.floor(time * 60) / 60
         //console.log(time)
 
         if (time > this.next_launch) {
@@ -263,13 +265,36 @@ export class Scene
         }
         points.sort((a, b) => (a.workgroup - b.workgroup))
 
+        var workgroup_counts = []
+        var workgroup_start_indexes = []
+        for (var w = 0; w < WORKGROUP_SIZE; w++) {
+            workgroup_counts[w] = 0;
+            workgroup_start_indexes[w] = 0;
+        }
+
+        var idx = 0;
+        var workgroup_count = 0;
+        var last_workgroup_id = -1;
         for (const point of points) {
+            if (point.workgroup !== last_workgroup_id) {
+                console.log("new workgroup: " + point.workgroup)
+                workgroup_start_indexes[point.workgroup] = idx;
+                workgroup_counts[point.workgroup] = workgroup_count;
+                last_workgroup_id = point.workgroup
+                workgroup_count = 0;
+            }
             buffer.append_raw(point.position.x)
             buffer.append_raw(point.position.y)
             buffer.append_raw(point.size);
             buffer.append_raw(0.0);
             buffer.append_raw_color4(point.color)
+            idx += 1;
+            workgroup_count += 1;
         }
+        workgroup_counts[last_workgroup_id] = workgroup_count;
+
+        console.log("workgroup_start_indexes: " + workgroup_start_indexes);
+        console.log("workgroup_counts: " + workgroup_counts);
 
         if (buffer.bytes_used() > this.stats_max_buffer) {
             this.stats_max_buffer = buffer.bytes_used()

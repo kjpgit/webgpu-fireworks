@@ -318,7 +318,7 @@ const init_webgpu = async (main: Main) => {
         //console.log('input', global_constants);
         //console.log('result', result);
 
-        requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
+        //requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
     }
 
     requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
