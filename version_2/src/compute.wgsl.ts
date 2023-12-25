@@ -1,10 +1,13 @@
 export var ComputeCode = `
 
 struct LineSegment {
-    line_start: vec4<f32>,
-    line_end: vec4<f32>,
+    line_start: vec2<f32>,
+    line_end: vec2<f32>,
     color_start: vec4<f32>,
-    color_end: vec4<f32>,
+    size: f32,
+    una: f32,
+    unb: f32,
+    unc: f32,
 };
 
 struct LineWorkQueue {
@@ -17,7 +20,7 @@ struct LineWorkQueue {
 
 @group(0) @binding(0) var<uniform> g_work_queue: LineWorkQueue;
 
-//@group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
+@group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
 
 @group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
 
@@ -30,43 +33,49 @@ fn compute_main(
 {
     var x = global_invocation_id.x;
     var y = global_invocation_id.y;
-    var color = g_work_queue.color;
 
     var x_ratio = f32(x) * 2. / g_work_queue.screen_x - 1.;
     var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
-    color.r = step(0.994, abs(x_ratio));
-    color.g = step(0.994, abs(y_ratio));
-    color.b *= abs(x_ratio);
-    //color.b *= g_line_segments[0].color_end.r;
 
-    textureStore(g_output_pixels, vec2(x, y), color);
+    if (false) {
+        // Screen test pattern
+        var color = g_work_queue.color;
+        color.r = step(0.994, abs(x_ratio));
+        color.g = step(0.994, abs(y_ratio));
+        color.b *= abs(x_ratio);
+        textureStore(g_output_pixels, vec2(x, y), color);
+    }
 
-
-    //for (var i = 0u; i < arrayLength(&compute_mem); i++) {
-    //for (var i = 0u; i < 3u; i++) {
-        //compute_mem[i].processed_by = local_invocation_index;
-        //compute_mem[i].output = compute_mem[i].input * 2;
-    //}
+    if (true) {
+        // Rasterize line segments
+        var position = vec2<f32>(x_ratio, y_ratio);
+        for (var i = 0u; i < arrayLength(&g_line_segments); i++) {
+            var distance = line_sdf(position, g_line_segments[i].line_start, g_line_segments[i].line_end);
+            var color = g_line_segments[i].color_start;
+            color.b *= distance;
+            textureStore(g_output_pixels, vec2(x, y), color);
+        }
+    }
 }
 
-// fn line_sdf( p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, aspect: f32 ) -> f32
-// {
-//     var pa = p-a;
-//     var ba = b-a;
-//     var h: f32 = saturate( dot(pa,ba) / dot(ba,ba) );
-//     var d: vec2<f32> = pa - ba * h;
-//     d.x *= aspect;
-//     return length(d);
-// }
+fn line_sdf( p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, aspect: f32 ) -> f32
+{
+    var pa = p-a;
+    var ba = b-a;
+    var h: f32 = saturate( dot(pa,ba) / dot(ba,ba) );
+    var d: vec2<f32> = pa - ba * h;
+    d.x *= aspect;
+    return length(d);
+}
 
-// fn is_bbox(pos: vec2<f32>, c1: vec2<f32>, c2: vec2<f32>) -> u32 {
-//     var d1 = distance(pos, c1);
-//     var d2 = distance(pos, c2);
-//     var d3 = distance(c1, c2);
-//     if ((abs(d3 - (d2 + d1))) < 0.01) {
-//         return 1;
-//     }
-//     return 0;
-// }
+fn is_bbox(pos: vec2<f32>, c1: vec2<f32>, c2: vec2<f32>) -> u32 {
+    var d1 = distance(pos, c1);
+    var d2 = distance(pos, c2);
+    var d3 = distance(c1, c2);
+    if ((abs(d3 - (d2 + d1))) < 0.01) {
+        return 1;
+    }
+    return 0;
+}
 
 `;

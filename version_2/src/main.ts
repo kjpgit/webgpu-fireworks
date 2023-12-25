@@ -18,6 +18,7 @@ class Main
     stats_time_start = 0
     num_frames = 0
     scene: Scene
+    readonly MAX_SEGMENT_BUFFER_SIZE = 20000000
 
     constructor() {
         this.scene = new Scene()
@@ -140,7 +141,6 @@ const init_webgpu = async (main: Main) => {
     const context = canvas.getContext("webgpu") ?? do_throw("Canvas does not support WebGPU");
 
     // Configure the swap chain
-    const MAX_BUFFER_SIZE = 20000000;
     const devicePixelRatio = window.devicePixelRatio || 1;
     console.log(`devicePixelRatio is ${devicePixelRatio}`);
     canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -182,14 +182,14 @@ const init_webgpu = async (main: Main) => {
     });
     device.queue.writeBuffer(constantsBuffer, 0, global_constants);
 
-//    const resultBuffer = device.createBuffer({
-//        size: global_constants.byteLength,
-//        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-//    });
+    const segmentBufferCPU = device.createBuffer({
+        size: main.MAX_SEGMENT_BUFFER_SIZE,
+        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
+    });
 
-    const segmentBuffer = device.createBuffer({
-        size: 100000,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    const segmentBufferGPU = device.createBuffer({
+        size: main.MAX_SEGMENT_BUFFER_SIZE,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
     const colorTexture = device.createTexture({
@@ -198,11 +198,16 @@ const init_webgpu = async (main: Main) => {
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
     })
 
+//    const resultBuffer = device.createBuffer({
+//        size: global_constants.byteLength,
+//        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+//    });
+
     const computeBG = device.createBindGroup({
         layout: computePipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: constantsBuffer } },
-            //{ binding: 1, resource: { buffer: segmentBuffer } },
+            { binding: 1, resource: { buffer: segmentBufferGPU } },
             { binding: 2, resource: colorTexture.createView() }
         ],
     });
@@ -229,15 +234,6 @@ const init_webgpu = async (main: Main) => {
         primitive: { topology: "triangle-list", },
     });
 
-    const vertexBufferCPU = device.createBuffer({
-        size: MAX_BUFFER_SIZE,
-        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
-    });
-
-    const vertexBufferGPU = device.createBuffer({
-        size: MAX_BUFFER_SIZE,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
 
     const sampler = device.createSampler({
         magFilter: 'linear',
@@ -269,25 +265,17 @@ const init_webgpu = async (main: Main) => {
 
 
         // Write into CPU buffer, then release it
-        await vertexBufferCPU.mapAsync(GPUMapMode.WRITE);
+        await segmentBufferCPU.mapAsync(GPUMapMode.WRITE);
 
-        const cpu_buffer = new Float32Array(vertexBufferCPU.getMappedRange());
+        const cpu_buffer = new Float32Array(segmentBufferCPU.getMappedRange());
         const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
 
         const scene_time = (main.pause_time == 0 ? elapsed_secs : main.pause_time) - main.pause_total;
         main.scene.set_screen_size(canvas.width, canvas.height)
-
-        //main.draw_uniform(canvas.width, canvas.height, scene_time, uniform_buffer_wrapper)
         main.scene.draw(cpu_buffer_wrapper, scene_time);
 
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
-
-        //const num_line_segments = (uniform_buffer_wrapper.bytes_used() - 4*4) / (12*4)
-        //console.log("num_line_segments: " + num_line_segments);
-        //uniform_buffer[2] = Math.min(num_line_segments, 1000);
-
-        vertexBufferCPU.unmap();
-        //uniformBufferCPU.unmap();
+        segmentBufferCPU.unmap();
 
         // GPU work starts here
         const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -302,7 +290,7 @@ const init_webgpu = async (main: Main) => {
         };
 
         const encoder = device.createCommandEncoder();
-        encoder.copyBufferToBuffer(vertexBufferCPU, 0, vertexBufferGPU, 0, cpu_buffer_bytes_used)
+        encoder.copyBufferToBuffer(segmentBufferCPU, 0, segmentBufferGPU, 0, cpu_buffer_bytes_used)
 
         const computePass = encoder.beginComputePass()
         computePass.setPipeline(computePipeline);
