@@ -8,6 +8,7 @@ const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
 const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
+const FLARE_TRAIL_STEP_SECS = 1/60
 const GRAVITY = -0.04
 
 const DEBUG_COLORS: Color4[] = [
@@ -115,7 +116,6 @@ class Firework {
     add_flares() {
         let count = 1
         let orig_color = get_random_color()
-        let orig_color2 = get_random_color()
 
         // Reserve exact storage space.  It saves a bit of wasted memory.
         //m_flares.reserveCapacity(count)
@@ -128,9 +128,9 @@ class Firework {
 
             // color variance
             let color = orig_color.clone()
-            //color.r += random_range(FLARE_COLOR_VARIANCE_RANGE)
-            //color.b += random_range(FLARE_COLOR_VARIANCE_RANGE)
-            //color.g += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            color.r += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            color.b += random_range(FLARE_COLOR_VARIANCE_RANGE)
+            color.g += random_range(FLARE_COLOR_VARIANCE_RANGE)
             //color.a = random_range(0.7, 4.0)
 
             // other variance
@@ -187,54 +187,33 @@ class Firework {
 
     private render_flare_trail(flare: Flare, secs: number, buffer: BufferWrapper)
     {
-        let b = buffer;
-
-        // If this is too small, flickering happens when the dots move
-        let PLUME_STEP_SECS = 1/60  // 0.016666
-
-        let l_secs = secs
-        if (l_secs > flare.duration_secs) {
+        let local_secs = secs
+        if (local_secs > flare.duration_secs) {
             return
         }
-        let plume_secs = 0
+
+        let nr_segments = 0;
+        let trail_secs = 0
         let size = flare.size;
 
-        let SHRINK_SECS=1
+        while (local_secs >= 0 && trail_secs <= flare.trail_secs) {
+            let position = flare.pointAtTime(local_secs, this.pos)
+            let color = flare.colorAtTime(local_secs)
 
-
-        let end_pos = flare.pointAtTime(l_secs, this.pos)
-        let orig_color = flare.colorAtTime(l_secs)
-        let color = orig_color
-
-        while (true) {
-
-            l_secs -= PLUME_STEP_SECS
-            if (l_secs < 0) { l_secs = 0; }
-
-            plume_secs += PLUME_STEP_SECS
-
-            let start_pos = flare.pointAtTime(l_secs, this.pos)
-
-            b.append_raw(start_pos.x)
-            b.append_raw(start_pos.y)
-            b.append_raw(end_pos.x)
-            b.append_raw(end_pos.y)
-            b.append_raw_color4(color)
-            b.append_raw(size);
-            b.append_raw(0.0);
-            b.append_raw(0.0);
-            b.append_raw(0.0);
+            buffer.append_raw(position.x)
+            buffer.append_raw(position.y)
+            buffer.append_raw(size);
+            buffer.append_raw(0.0);
+            buffer.append_raw_color4(color)
 
             // todo: make point smaller at end
 
             size *= 0.95
             color.a *= 0.9;
 
-            end_pos = start_pos;
-
-            if (l_secs == 0 || plume_secs > flare.trail_secs) {
-                return
-            }
+            // go to previous particle on trail
+            local_secs -= FLARE_TRAIL_STEP_SECS
+            trail_secs += FLARE_TRAIL_STEP_SECS
         }
     }
 }
