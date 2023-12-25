@@ -34,8 +34,8 @@ fn compute_main(
 
     var x_ratio = f32(x) * 2. / g_work_queue.screen_x - 1.;
     var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
-    color.r = step(0.99, abs(x_ratio));
-    color.g = step(0.99, abs(y_ratio));
+    color.r = step(0.994, abs(x_ratio));
+    color.g = step(0.994, abs(y_ratio));
     color.b *= abs(x_ratio);
     //color.b *= g_line_segments[0].color_end.r;
 
