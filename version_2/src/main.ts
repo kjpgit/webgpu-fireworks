@@ -168,7 +168,11 @@ const init_webgpu = async (main: Main) => {
         },
     });
 
-    const compute_input_js = new Float32Array([1, 3, 5]);
+    const compute_input_js = new Float32Array([
+        0, 2, 0,
+        0, 4, 0,
+        0, 99, 0,
+    ]);
 
     // create a buffer on the GPU to hold our computation
     // input and output
@@ -364,9 +368,11 @@ const init_webgpu = async (main: Main) => {
         device.queue.submit([encoder.finish()]);
 
         await resultBuffer.mapAsync(GPUMapMode.READ);
+        // @ts-ignore
         const result = new Float32Array(resultBuffer.getMappedRange().slice());
         resultBuffer.unmap();
 
+        console.log('input', compute_input_js);
         console.log('result', result);
 
         //requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));

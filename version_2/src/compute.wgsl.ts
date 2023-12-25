@@ -14,7 +14,8 @@ fn compute_main(
     @builtin(local_invocation_index) local_invocation_index: u32
 )
 {
-    for (var i = 0u; i < arrayLength(&compute_mem); i++) {
+    //for (var i = 0u; i < arrayLength(&compute_mem); i++) {
+    for (var i = 0u; i < 3u; i++) {
         compute_mem[i].processed_by = local_invocation_index;
         compute_mem[i].output = compute_mem[i].input * 2;
     }
