@@ -95,7 +95,7 @@ class Main
     draw_uniform(width: number, height: number, elapsedSecs: number, buffer: BufferWrapper) {
         const delta = Math.sin(elapsedSecs * 8) / 8;
         var vertices = [
-            width, height, 14, 0,
+            width, height, 4, 0,
             0.0 + delta, -0.2, 1, 1,
             0.95, 0.95, 1, 1,
             0.0, 1.0, 0.0, 1,
@@ -259,8 +259,9 @@ const init_webgpu = async (main: Main) => {
             }
 
             fn is_bbox(pos: vec2<f32>, c1: vec2<f32>, c2: vec2<f32>) -> u32 {
-                if (pos.x >= min(c1.x, c2.x) && pos.x <= max(c1.x, c2.x)
-                    //&& pos.y >= min(c1.y, c2.y) && pos.y <= max(c1.y, c2.y)
+                var thick = 0.01;
+                if (pos.x >= min(c1.x, c2.x) - thick && pos.x <= max(c1.x, c2.x) + thick
+                    //&& pos.y >= min(c1.y, c2.y) - thick && pos.y <= max(c1.y, c2.y) + thick
                    ) {
                         return 1;
                 }
@@ -384,7 +385,7 @@ const init_webgpu = async (main: Main) => {
 
         const num_line_segments = (uniform_buffer_wrapper.bytes_used() - 4*4) / (12*4)
         //console.log("num_line_segments: " + num_line_segments);
-        uniform_buffer[2] = Math.min(num_line_segments, 1000);
+        uniform_buffer[2] = Math.min(num_line_segments, 10000);
 
         vertexBufferCPU.unmap();
         uniformBufferCPU.unmap();
