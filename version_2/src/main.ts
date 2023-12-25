@@ -219,12 +219,8 @@ const init_webgpu = async (main: Main) => {
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
-    //const pixelBuffer = device.createBuffer({
-        //size: canvas.width * canvas.height * 4,
-        //usage: GPUBufferUsage.STORAGE,
-    //});
-    const pixelBuffer = device.createTexture({
-        size: [canvas.width, canvas.height, 1],
+    const colorTexture = device.createTexture({
+        size: [canvas.width, canvas.height],
         format: "rgba8unorm",
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
     })
@@ -234,9 +230,7 @@ const init_webgpu = async (main: Main) => {
         entries: [
             { binding: 0, resource: { buffer: constantsBuffer } },
             { binding: 1, resource: { buffer: segmentBuffer } },
-            //{ binding: 2, resource: { texture: pixelBuffer } },
-            { binding: 2, resource: pixelBuffer.createView() }
-
+            { binding: 2, resource: colorTexture.createView() }
         ],
     });
 
@@ -246,17 +240,17 @@ const init_webgpu = async (main: Main) => {
     const fragmentBGL = device.createBindGroupLayout({
         entries: [
             {
-                binding: 0,
+                binding: 0,  // global constants - read only
                 visibility: GPUShaderStage.FRAGMENT,
                 buffer: { type: "uniform", },
             },
             {
-                binding: 1,
+                binding: 1, // full screen texture to read from
                 visibility: GPUShaderStage.FRAGMENT,
                 texture: { },
             },
             {
-                binding: 2,
+                binding: 2, // texture sampler
                 visibility: GPUShaderStage.FRAGMENT,
                 sampler: { type: "filtering" },
             },
@@ -269,15 +263,6 @@ const init_webgpu = async (main: Main) => {
         ]
     });
 
-    const vertexBufferCPU = device.createBuffer({
-        size: MAX_BUFFER_SIZE,
-        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
-    });
-
-    const vertexBufferGPU = device.createBuffer({
-        size: MAX_BUFFER_SIZE,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
 
     const vertexBuffersDescriptors: GPUVertexBufferLayout[] = [
         {
@@ -352,8 +337,7 @@ const init_webgpu = async (main: Main) => {
         layout: pipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: constantsBuffer, }, },
-            //{ binding: 1, resource: { buffer: pixelBuffer, }, },
-            { binding: 1, resource: pixelBuffer.createView() },
+            { binding: 1, resource: colorTexture.createView() },
             { binding: 2, resource: sampler }
         ],
     });
