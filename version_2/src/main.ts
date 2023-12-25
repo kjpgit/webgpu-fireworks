@@ -156,48 +156,45 @@ const init_webgpu = async (main: Main) => {
 
 
     // COMPUTE SHADER
-    const computeModule = device.createShaderModule({
-        label: 'hi',
-        code: ComputeCode,
-    });
-
     const computeBGL = device.createBindGroupLayout({
         entries: [
             {
-                binding: 0,
+                binding: 0,  // global constants - read only
                 visibility: GPUShaderStage.COMPUTE,
                 buffer: { type: "uniform", },
             },
             {
-                binding: 1,
+                binding: 1,  // line segments - read only
                 visibility: GPUShaderStage.COMPUTE,
                 buffer: { type: "storage", },
             },
             {
-                binding: 2,
+                binding: 2,  // full screen texture to write to
                 visibility: GPUShaderStage.COMPUTE,
-                //buffer: { type: "storage", },
                 storageTexture: { access: "write-only", format: "rgba8unorm", },
             },
         ],
     });
 
-    const pipelineLayout = device.createPipelineLayout({
+    const computePL = device.createPipelineLayout({
         bindGroupLayouts: [
             computeBGL, // @group(0)
         ]
     });
 
-    const computePipeline = device.createComputePipeline({
-        layout: pipelineLayout,
-        compute: {
-            module: computeModule,
-            entryPoint: 'compute_main',
-        },
+    const computeModule = device.createShaderModule({
+        label: 'computeModule',
+        code: ComputeCode,
     });
 
 
-    const compute_input_js = new Float32Array([
+    const computePipeline = device.createComputePipeline({
+        layout: computePL,
+        compute: { module: computeModule, entryPoint: 'compute_main',
+        },
+    });
+
+    const global_constants = new Float32Array([
         canvas.width,
         canvas.height,
         100,  // nr_segments,
@@ -206,16 +203,16 @@ const init_webgpu = async (main: Main) => {
         99, 99, 99, 99, // fill
     ]);
 
-    const workBuffer = device.createBuffer({
-        size: compute_input_js.byteLength,
+    const constantsBuffer = device.createBuffer({
+        size: global_constants.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-    device.queue.writeBuffer(workBuffer, 0, compute_input_js);
+    device.queue.writeBuffer(constantsBuffer, 0, global_constants);
 
-    const resultBuffer = device.createBuffer({
-        size: compute_input_js.byteLength,
-        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-    });
+//    const resultBuffer = device.createBuffer({
+//        size: global_constants.byteLength,
+//        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+//    });
 
     const segmentBuffer = device.createBuffer({
         size: 100000,
@@ -235,7 +232,7 @@ const init_webgpu = async (main: Main) => {
     const computeBG = device.createBindGroup({
         layout: computeBGL,
         entries: [
-            { binding: 0, resource: { buffer: workBuffer } },
+            { binding: 0, resource: { buffer: constantsBuffer } },
             { binding: 1, resource: { buffer: segmentBuffer } },
             //{ binding: 2, resource: { texture: pixelBuffer } },
             { binding: 2, resource: pixelBuffer.createView() }
@@ -354,7 +351,7 @@ const init_webgpu = async (main: Main) => {
     const fragmentBG = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
-            { binding: 0, resource: { buffer: workBuffer, }, },
+            { binding: 0, resource: { buffer: constantsBuffer, }, },
             //{ binding: 1, resource: { buffer: pixelBuffer, }, },
             { binding: 1, resource: pixelBuffer.createView() },
             { binding: 2, resource: sampler }
@@ -419,7 +416,7 @@ const init_webgpu = async (main: Main) => {
         //computePass.dispatchWorkgroups(1);
         computePass.end();
 
-        //encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
+        //encoder.copyBufferToBuffer(constantsBuffer, 0, resultBuffer, 0, resultBuffer.size);
 
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(pipeline);
@@ -430,12 +427,12 @@ const init_webgpu = async (main: Main) => {
 
         device.queue.submit([encoder.finish()]);
 
-        await resultBuffer.mapAsync(GPUMapMode.READ);
+        //await resultBuffer.mapAsync(GPUMapMode.READ);
         // @ts-ignore
-        const result = new Float32Array(resultBuffer.getMappedRange().slice());
-        resultBuffer.unmap();
+        //const result = new Float32Array(resultBuffer.getMappedRange().slice());
+        //resultBuffer.unmap();
 
-        //console.log('input', compute_input_js);
+        //console.log('input', global_constants);
         //console.log('result', result);
 
         requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
