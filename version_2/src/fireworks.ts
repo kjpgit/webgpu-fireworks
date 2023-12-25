@@ -1,10 +1,10 @@
-import { BufferWrapper, Vector2, Vector3, Color4  } from "./buffer.js";
+import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const LAUNCH_TIME_RANGE = [2.1, 2.7]
 const NUM_FLARES = 100
-const FLARE_VELOCITY_RANGE = [0.3, 0.5]  // fixme: this doesn't make much sense
+const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
 const FLARE_SIZE_RANGE = [0.005, 0.019]
@@ -41,15 +41,18 @@ function _get_flight(vel: number, secs: number) : number {
     return t * vel
 }
 
+// 128 x 128
 class RenderPoint {
     readonly position: Vector2
     readonly size: number
     readonly color: Color4
+    readonly workgroup: number
 
     constructor(position: Vector2, size: number, color: Color4) {
         this.position = position
         this.size = size
         this.color = color
+        this.workgroup = 0
     }
 }
 
@@ -58,7 +61,7 @@ class RenderPoint {
 // We record its initial parameters, so later we can (re)calculate position at
 // any point in time.  Note the entire struct is immutable.
 class Flare {
-    readonly velocity_vec: Vector3
+    readonly velocity_vec: Vector2
     readonly size: number
     readonly color: Color4
 
@@ -68,7 +71,7 @@ class Flare {
     // How far back the trail goes (plume mode)
     readonly trail_secs: number
 
-    constructor(velocity_vec: Vector3, size: number, color: Color4,
+    constructor(velocity_vec: Vector2, size: number, color: Color4,
                 duration_secs: number, trail_secs: number) {
         this.velocity_vec = velocity_vec
         this.size = size
@@ -77,7 +80,7 @@ class Flare {
         this.trail_secs = trail_secs
     }
 
-    public pointAtTime(secs: number, orig_pos: Vector3) : Vector3 {
+    public pointAtTime(secs: number, orig_pos: Vector2) : Vector2 {
         let ret = orig_pos.clone();
         ret.x += _get_flight(this.velocity_vec.x, secs)
         ret.y += _get_flight(this.velocity_vec.y, secs)
@@ -102,21 +105,17 @@ class Flare {
 
 
 class Firework {
-    readonly pos: Vector3
+    readonly pos: Vector2
     readonly start_time: number
     readonly type: number
     readonly m_flares: Flare[]
 
     // Create a random firework
     constructor(time: number) {
-        const pos_x = random_range([-0.8, 0.8])
-        const pos_y = random_range([0.0, 0.8])
+        const pos_x = random_range([0.1, 0.9])
+        const pos_y = random_range([0.5, 0.9])
 
-        // It's cool to set this at -0.2 and see the fireworks as they pop
-        // through the back plane (if you also enable z velocity)
-        const pos_z = 0.1
-
-        this.pos = new Vector3(pos_x, pos_y, pos_z)
+        this.pos = new Vector2(pos_x, pos_y)
         this.type = Math.floor(random_range([0, 2]))
         this.type = 1;
         this.start_time = time
@@ -230,30 +229,6 @@ class Firework {
 }
 
 
-function draw_triangle_2d(b: BufferWrapper, pos: Vector3, width: number, height: number, color: Color4) {
-    if (!b.has_available(3*8)) {
-        return
-    }
-
-    b.append_raw(pos.x - width)
-    b.append_raw(pos.y)
-    b.append_raw(pos.z)
-    b.append_raw(1.0)
-    b.append_raw_color4(color)
-
-    b.append_raw(pos.x + width)
-    b.append_raw(pos.y)
-    b.append_raw(pos.z)
-    b.append_raw(1.0)
-    b.append_raw_color4(color)
-
-    b.append_raw(pos.x)
-    b.append_raw(pos.y + height)
-    b.append_raw(pos.z)
-    b.append_raw(1.0)
-    b.append_raw_color4(color)
-}
-
 
 export class Scene
 {
@@ -286,6 +261,7 @@ export class Scene
         for (const fw of this.m_fireworks) {
             fw.draw(time, this.x_aspect_ratio, points)
         }
+        points.sort((a, b) => (a.workgroup - b.workgroup))
 
         for (const point of points) {
             buffer.append_raw(point.position.x)

@@ -1,4 +1,4 @@
-import { Vector3  } from "./buffer.js";
+import { Vector2, Vector3  } from "./buffer.js";
 
 const PI = 3.1415926535
 
@@ -50,12 +50,12 @@ the sphere at that point.  It can use the top or bottom hemisphere for z.  This
 gives better distribution than two random angles (which will produce more
 points clustered at the poles)
 */
-export function RandomUniformUnitVector2D(): Vector3 {
+export function RandomUniformUnitVector2D(): Vector2 {
     const angle = random_range([0.0, 2.0 * PI])
     const r = Math.sqrt(my_random())
     //const hemisphere = random_choose(-1.0, 1.0)
     //const z = Math.sqrt(1.0 - r*r) * hemisphere
     const z = 0.0;  // z is not needed for fireworks
-    return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
+    return new Vector2(r * Math.cos(angle), r * Math.sin(angle))
 }
 

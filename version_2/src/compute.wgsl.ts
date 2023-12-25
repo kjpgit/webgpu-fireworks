@@ -31,8 +31,8 @@ fn compute_main(
     var x = global_invocation_id.x;
     var y = global_invocation_id.y;
 
-    var x_ratio = f32(x) * 2. / g_work_queue.screen_x - 1.;
-    var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
+    var x_ratio = f32(x) / g_work_queue.screen_x;
+    var y_ratio = f32(y) / g_work_queue.screen_y;
     y_ratio *= -1.0;
 
     if (false) {
