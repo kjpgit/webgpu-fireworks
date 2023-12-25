@@ -33,13 +33,13 @@ fn compute_main(
 
     var x_ratio = f32(x) / g_work_queue.screen_x;
     var y_ratio = f32(y) / g_work_queue.screen_y;
-    y_ratio *= -1.0;
+    y_ratio = 1 - y_ratio;
 
     if (false) {
         // Screen test pattern
         var color = g_work_queue.color;
-        color.r = step(0.994, abs(x_ratio));
-        color.g = step(0.994, abs(y_ratio));
+        color.r = step(0.494, abs(x_ratio-0.5));
+        color.g = step(0.494, abs(y_ratio-0.5));
         color.b *= abs(x_ratio);
         textureStore(g_output_pixels, vec2(x, y), color);
     }
@@ -53,7 +53,7 @@ fn compute_main(
         for (var i = 0u; i < num_segments; i++) {
             //if (is_bbox(position, g_line_segments[i].line_start, g_line_segments[i].line_end) > 0) {
             if (true) {
-                var distance = point_sdf(position, g_line_segments[i].line_start, 1.9);
+                var distance = point_sdf(position, g_line_segments[i].line_start, 1.0);
                 var ratio = 1.0 - smoothstep(0.0, g_line_segments[i].size, distance);
                 var new_color = g_line_segments[i].color_start;
                 new_color *= ratio;

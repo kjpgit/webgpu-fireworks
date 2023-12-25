@@ -7,7 +7,7 @@ const NUM_FLARES = 100
 const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
-const FLARE_SIZE_RANGE = [0.005, 0.019]
+const FLARE_SIZE_RANGE = [0.002, 0.010]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
