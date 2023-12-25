@@ -15,7 +15,7 @@ struct LineWorkQueue {
     color: vec4<f32>,
 };
 
-@group(0) @binding(0) var<storage, read_write> g_work_queue: LineWorkQueue;
+@group(0) @binding(0) var<uniform> g_work_queue: LineWorkQueue;
 
 @group(0) @binding(1) var<storage, read> g_line_segments: array<LineSegment>;
 
@@ -32,27 +32,13 @@ fn compute_main(
     var y = global_invocation_id.y;
     var color = g_work_queue.color;
 
-    var x_ratio = f32(x) / g_work_queue.screen_x;
-    var y_ratio = f32(y) / g_work_queue.screen_y;
-    color.r *= x_ratio;
-    color.g *= y_ratio;
-    //color.g *= (1-x_ratio);
-    //color.r *= 0.1;
-    //color.r = fract(x);
+    var x_ratio = f32(x) * 2. / g_work_queue.screen_x - 1.;
+    var y_ratio = f32(y) * 2. / g_work_queue.screen_y - 1.;
+    color.r = step(0.99, abs(x_ratio));
+    color.g = step(0.99, abs(y_ratio));
 
     textureStore(g_output_pixels, vec2(x, y), color);
-    /*
-    for (var i = 0; i < i32(g_work_queue.screen_x); i++) {
-        for (var j = 0; j < i32(g_work_queue.screen_y); j++) {
-            textureStore(g_output_pixels, vec2(i, j), color);
-            color.g *= 0.90;
-        }
-        color.r *= 0.90;
-    }
-    */
 
-    //var uv = vec2<f32>(x * 2/g_work_queue.screen_x - 1.,
-                       ////y * -2/g_work_queue.screen_y + 1.);
 
     //for (var i = 0u; i < arrayLength(&compute_mem); i++) {
     //for (var i = 0u; i < 3u; i++) {

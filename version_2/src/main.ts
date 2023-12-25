@@ -166,7 +166,7 @@ const init_webgpu = async (main: Main) => {
             {
                 binding: 0,
                 visibility: GPUShaderStage.COMPUTE,
-                buffer: { type: "storage", },
+                buffer: { type: "uniform", },
             },
             {
                 binding: 1,
@@ -208,7 +208,7 @@ const init_webgpu = async (main: Main) => {
 
     const workBuffer = device.createBuffer({
         size: compute_input_js.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     device.queue.writeBuffer(workBuffer, 0, compute_input_js);
 
@@ -251,7 +251,7 @@ const init_webgpu = async (main: Main) => {
             {
                 binding: 0,
                 visibility: GPUShaderStage.FRAGMENT,
-                buffer: { type: "storage", },
+                buffer: { type: "uniform", },
             },
             {
                 binding: 1,
@@ -419,7 +419,7 @@ const init_webgpu = async (main: Main) => {
         //computePass.dispatchWorkgroups(1);
         computePass.end();
 
-        encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
+        //encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
 
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(pipeline);
@@ -438,7 +438,7 @@ const init_webgpu = async (main: Main) => {
         //console.log('input', compute_input_js);
         //console.log('result', result);
 
-        //requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
+        requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
     }
 
     requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));

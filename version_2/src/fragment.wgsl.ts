@@ -5,7 +5,15 @@ struct VertexOut {
     @location(0) color : vec4<f32>,
 };
 
-//@group(0) @binding(0) var<uniform, read> g_work_queue: LineWorkQueue;
+struct LineWorkQueue {
+    screen_x: f32,
+    screen_y: f32,
+    nr_segments: f32,
+    unused: f32,
+    color: vec4<f32>,
+};
+
+@group(0) @binding(0) var<uniform> g_work_queue: LineWorkQueue;
 
 @group(0) @binding(1) var g_output_pixels: texture_2d<f32>;
 
@@ -15,8 +23,8 @@ struct VertexOut {
 @fragment
 fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
 {
-    var x = fragData.position.x / 1000;
-    var y = fragData.position.y / 900;
+    var x = fragData.position.x / g_work_queue.screen_x;
+    var y = fragData.position.y / g_work_queue.screen_y;
 
     /*
     if (x < 4) {
