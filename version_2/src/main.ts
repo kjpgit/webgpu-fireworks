@@ -170,20 +170,32 @@ const init_webgpu = async (main: Main) => {
 
     const compute_input_js = new Float32Array([1, 3, 5]);
 
+    // create a buffer on the GPU to hold our computation
+    // input and output
+    const workBuffer = device.createBuffer({
+        label: 'work buffer',
+        size: compute_input_js.byteLength,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+    });
+    // Copy our input data to that buffer
+    device.queue.writeBuffer(workBuffer, 0, compute_input_js);
 
-    const bindGroupLayoutCompute = device.createBindGroupLayout({
+    // create a buffer on the GPU to get a copy of the results
+    const resultBuffer = device.createBuffer({
+        size: compute_input_js.byteLength,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    });
+
+    const computeBG = device.createBindGroup({
+        layout: computePipeline.getBindGroupLayout(0),
         entries: [
-            {
-                binding: 0,
-                visibility: GPUShaderStage.COMPUTE,
-                buffer: {
-                    type: 'storage',
-                },
-            },
+            { binding: 0, resource: { buffer: workBuffer } },
         ],
     });
 
 
+
+    // FRAGMENT
     const buffer0 = device.createBuffer({
       size: MAX_BUFFER_SIZE,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -277,15 +289,6 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
-    const computeBG = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(1),
-        entries: [
-            {
-                binding: 0,
-                resource: { buffer: buffer0, },
-            },
-        ],
-    });
 
 
     async function frame(elapsedMs: DOMHighResTimeStamp, main: Main) {
@@ -339,25 +342,34 @@ const init_webgpu = async (main: Main) => {
             ],
         };
 
-        const commandEncoder = device.createCommandEncoder();
-        commandEncoder.copyBufferToBuffer(vertexBufferCPU, 0, vertexBufferGPU, 0, cpu_buffer_bytes_used)
-        commandEncoder.copyBufferToBuffer(uniformBufferCPU, 0, buffer0, 0, uniform_buffer_bytes_used)
+        const encoder = device.createCommandEncoder();
+        encoder.copyBufferToBuffer(vertexBufferCPU, 0, vertexBufferGPU, 0, cpu_buffer_bytes_used)
+        encoder.copyBufferToBuffer(uniformBufferCPU, 0, buffer0, 0, uniform_buffer_bytes_used)
 
         const computePass = encoder.beginComputePass()
-        computePass.setPipeline(pipeline);
-        computePass.setBindGroup(1, computeBG);
+        computePass.setPipeline(computePipeline);
+        computePass.setBindGroup(0, computeBG);
         computePass.dispatchWorkgroups(3);
         computePass.end();
 
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(pipeline);
-        passEncoder.setBindGroup(0, uniformBG);
-        passEncoder.setVertexBuffer(0, vertexBufferGPU);
-        passEncoder.draw(cpu_buffer_wrapper.elements_used() / 8);
-        passEncoder.end();
+        encoder.copyBufferToBuffer(workBuffer, 0, resultBuffer, 0, resultBuffer.size);
 
-        device.queue.submit([commandEncoder.finish()]);
-        requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
+        const renderPass = encoder.beginRenderPass(renderPassDescriptor);
+        renderPass.setPipeline(pipeline);
+        renderPass.setBindGroup(0, uniformBG);
+        renderPass.setVertexBuffer(0, vertexBufferGPU);
+        renderPass.draw(cpu_buffer_wrapper.elements_used() / 8);
+        renderPass.end();
+
+        device.queue.submit([encoder.finish()]);
+
+        await resultBuffer.mapAsync(GPUMapMode.READ);
+        const result = new Float32Array(resultBuffer.getMappedRange().slice());
+        resultBuffer.unmap();
+
+        console.log('result', result);
+
+        //requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
     }
 
     requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
