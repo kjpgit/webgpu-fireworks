@@ -155,8 +155,7 @@ const init_webgpu = async (main: Main) => {
     });
 
 
-    // COMPUTE SHADER
-
+    // Compute shader
     const computeModule = device.createShaderModule({
         label: 'computeModule',
         code: ComputeCode,
@@ -212,8 +211,8 @@ const init_webgpu = async (main: Main) => {
 
     // Render pipeline (simple quad vertex and fragment shader)
     const shaderModule = device.createShaderModule({
+        label: 'fragmentModule',
         code: FragmentCode,
-        label: 'fragment',
     });
 
     const renderPipeline = device.createRenderPipeline({
@@ -308,7 +307,7 @@ const init_webgpu = async (main: Main) => {
         const computePass = encoder.beginComputePass()
         computePass.setPipeline(computePipeline);
         computePass.setBindGroup(0, computeBG);
-        computePass.dispatchWorkgroups(canvas.width, canvas.height, 1);
+        computePass.dispatchWorkgroups(Math.ceil(canvas.width/4), Math.ceil(canvas.height/8), 1);
         //computePass.dispatchWorkgroups(1);
         computePass.end();
 

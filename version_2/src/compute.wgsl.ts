@@ -22,7 +22,7 @@ struct LineWorkQueue {
 @group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
 
 
-@compute @workgroup_size(1)
+@compute @workgroup_size(4,8)
 fn compute_main(
     @builtin(local_invocation_index) local_invocation_index: u32,
     @builtin(global_invocation_id) global_invocation_id: vec3<u32>
