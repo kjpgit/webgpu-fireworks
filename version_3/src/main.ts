@@ -149,10 +149,8 @@ const init_webgpu = async (main: Main) => {
     });
     device.queue.writeBuffer(constantsBuffer, 0, global_constants);
 
-    const segmentBufferCPU = device.createBuffer({
-        size: main.MAX_SEGMENT_BUFFER_SIZE,
-        usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE,
-    });
+    const cpu_buffer = new Float32Array(main.MAX_SEGMENT_BUFFER_SIZE)
+    const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer)
 
     const segmentBufferGPU = device.createBuffer({
         size: main.MAX_SEGMENT_BUFFER_SIZE,
@@ -218,20 +216,15 @@ const init_webgpu = async (main: Main) => {
         main.timer.set_raw_time(raw_elapsed_secs)
 
 
-        // Write into CPU buffer, then release it
-        await segmentBufferCPU.mapAsync(GPUMapMode.WRITE);
-
-        const cpu_buffer = new Float32Array(segmentBufferCPU.getMappedRange());
-        const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
-
+        // CPU Work Start ----------------------
         const scene_time = main.timer.get_scene_time()
         main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
         main.scene.draw(cpu_buffer_wrapper, scene_time);
 
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
-        segmentBufferCPU.unmap();
+        device.queue.writeBuffer(segmentBufferGPU, 0, cpu_buffer, cpu_buffer_wrapper.elements_used())
 
-        // GPU work starts here
+        // GPU Work Start ----------------------
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
@@ -244,7 +237,6 @@ const init_webgpu = async (main: Main) => {
         };
 
         const encoder = device.createCommandEncoder();
-        encoder.copyBufferToBuffer(segmentBufferCPU, 0, segmentBufferGPU, 0, cpu_buffer_bytes_used)
 
         const computePass = encoder.beginComputePass()
         computePass.setPipeline(computePipeline);
@@ -260,10 +252,7 @@ const init_webgpu = async (main: Main) => {
 
         computePass.setBindGroup(0, computeBG);
         computePass.dispatchWorkgroups(Math.ceil(canvas.width/4), Math.ceil(canvas.height/8), 1);
-        //computePass.dispatchWorkgroups(1);
         computePass.end();
-
-        //encoder.copyBufferToBuffer(constantsBuffer, 0, resultBuffer, 0, resultBuffer.size);
 
         const renderPass = encoder.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
@@ -272,14 +261,6 @@ const init_webgpu = async (main: Main) => {
         renderPass.end();
 
         device.queue.submit([encoder.finish()]);
-
-        //await resultBuffer.mapAsync(GPUMapMode.READ);
-        // @ts-ignore
-        //const result = new Float32Array(resultBuffer.getMappedRange().slice());
-        //resultBuffer.unmap();
-
-        //console.log('input', global_constants);
-        //console.log('result', result);
 
         requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
     }
