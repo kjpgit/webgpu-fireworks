@@ -12,6 +12,7 @@ export function do_throw(errorMessage: string): never {
 class Main
 {
     is_fullscreen = false
+    max_segment_buffer_nr_bytes = 0
     stats_time_start = 0
     scene: Scene
     timer: SceneTimer
@@ -210,6 +211,7 @@ const init_webgpu = async (main: Main) => {
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.stats_time_start > 1) {
+            console.log(`max segment_buffer_nr_bytes: ${main.max_segment_buffer_nr_bytes}`)
             console.log(`fps: fixme`);
             main.stats_time_start = raw_elapsed_secs
         }
@@ -218,11 +220,15 @@ const init_webgpu = async (main: Main) => {
 
         // CPU Work Start ----------------------
         const scene_time = main.timer.get_scene_time()
+        cpu_buffer_wrapper.clear();
         main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
         main.scene.draw(cpu_buffer_wrapper, scene_time);
 
-        const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();
-        device.queue.writeBuffer(segmentBufferGPU, 0, cpu_buffer, cpu_buffer_wrapper.elements_used())
+        const segment_buffer_nr_bytes = cpu_buffer_wrapper.bytes_used();
+        device.queue.writeBuffer(segmentBufferGPU, 0, cpu_buffer, 0, cpu_buffer_wrapper.elements_used())
+        if (segment_buffer_nr_bytes > main.max_segment_buffer_nr_bytes) {
+            main.max_segment_buffer_nr_bytes = segment_buffer_nr_bytes
+        }
 
         // GPU Work Start ----------------------
         const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -237,7 +243,6 @@ const init_webgpu = async (main: Main) => {
         };
 
         const encoder = device.createCommandEncoder();
-
         const computePass = encoder.beginComputePass()
         computePass.setPipeline(computePipeline);
 
@@ -245,7 +250,7 @@ const init_webgpu = async (main: Main) => {
             layout: computePipeline.getBindGroupLayout(0),
             entries: [
                 { binding: 0, resource: { buffer: constantsBuffer } },
-                { binding: 1, resource: { buffer: segmentBufferGPU, size: cpu_buffer_bytes_used } },
+                { binding: 1, resource: { buffer: segmentBufferGPU, size: segment_buffer_nr_bytes } },
                 { binding: 2, resource: colorTexture.createView() }
             ],
         });

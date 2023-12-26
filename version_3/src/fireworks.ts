@@ -340,15 +340,6 @@ export class Scene
             }
         }
 
-        if (buffer.bytes_used() > this.stats_max_buffer) {
-            this.stats_max_buffer = buffer.bytes_used()
-        }
-
-        if (this.next_stats < time) {
-            console.log(`stats_max_buffer: ${this.stats_max_buffer}`)
-            this.next_stats = time + 1.0
-            this.stats_max_buffer = 0
-        }
     }
 
     private launch_firework(current_time: number) {

@@ -11,6 +11,10 @@ export class BufferWrapper {
       this.nr_elements = 0
     }
 
+    clear() {
+        this.nr_elements = 0;
+    }
+
     bytes_used(): number {
         return this.nr_elements * 4;
     }
