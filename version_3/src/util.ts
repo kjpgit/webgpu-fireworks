@@ -146,3 +146,26 @@ export class SceneTimer {
     }
 }
 
+
+export class FPSMonitor {
+    private frame_data: number[][] = []
+
+    add_frame_timing(frame_data: number[]) {
+        this.frame_data.push(frame_data)
+    }
+
+    clear() {
+        this.frame_data = []
+    }
+
+    get_timing_info(index: number): string {
+        let vals: number[] = []
+        for (const frame of this.frame_data) {
+            vals.push(frame[index])
+        }
+        const sum = vals.reduce((a,b) => a + b, 0)
+        const avg = (sum / vals.length).toFixed(2)
+        const max = Math.max(...vals).toFixed(2)
+        return `avg: ${avg} ms, max: ${max} ms`
+    }
+}

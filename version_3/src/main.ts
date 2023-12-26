@@ -1,4 +1,4 @@
-import { SceneTimer, BufferWrapper } from "./util.js"
+import { FPSMonitor, SceneTimer, BufferWrapper } from "./util.js"
 import { Scene } from "./fireworks.js"
 import { ComputeCode } from "./compute.wgsl.js"
 import { FragmentCode } from "./fragment.wgsl.js"
@@ -18,10 +18,12 @@ class Main
     last_stats_time = 0
     scene: Scene
     scene_timer: SceneTimer
+    fps_monitor: FPSMonitor
 
     constructor() {
-        this.scene_timer = new SceneTimer()
         this.scene = new Scene()
+        this.scene_timer = new SceneTimer()
+        this.fps_monitor = new FPSMonitor()
 
         addEventListener("dblclick", e => this.on_double_click(e))
         addEventListener("keydown", e => this.on_keydown(e))
@@ -206,9 +208,11 @@ const init_webgpu = async (main: Main) => {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
             console.log(`max_segment_buffer_nr_bytes: ${main.max_segment_buffer_nr_bytes}`)
-            console.log(`fps: fixme`);
+            console.log(`frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
+            console.log(`frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
             main.last_stats_time = raw_elapsed_secs
             main.max_segment_buffer_nr_bytes = 0
+            main.fps_monitor.clear()
         }
 
 
@@ -267,7 +271,8 @@ const init_webgpu = async (main: Main) => {
         device.queue.submit([encoder.finish()]);
         device.queue.onSubmittedWorkDone().then(() => {
             const perf_gpu_end = performance.now()
-            console.log(`cpu ${perf_cpu_end - perf_cpu_start}, gpu ${perf_gpu_end - perf_gpu_start}`)
+            const frame_timing = [perf_cpu_end - perf_cpu_start, perf_gpu_end - perf_gpu_start]
+            main.fps_monitor.add_frame_timing(frame_timing)
             requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
         })
     }
