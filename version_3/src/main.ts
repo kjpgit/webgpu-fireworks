@@ -1,4 +1,4 @@
-import { BufferWrapper } from "./util.js"
+import { SceneTimer, BufferWrapper } from "./util.js"
 import { Scene } from "./fireworks.js"
 import { ComputeCode } from "./compute.wgsl.js"
 import { FragmentCode } from "./fragment.wgsl.js"
@@ -12,15 +12,13 @@ export function do_throw(errorMessage: string): never {
 class Main
 {
     is_fullscreen = false
-    last_time = 0
-    pause_time = 0
-    pause_total = 0
     stats_time_start = 0
-    num_frames = 0
     scene: Scene
+    timer: SceneTimer
     readonly MAX_SEGMENT_BUFFER_SIZE = 20000000
 
     constructor() {
+        this.timer = new SceneTimer()
         this.scene = new Scene()
 
         addEventListener("dblclick", e => this.on_double_click(e))
@@ -38,21 +36,16 @@ class Main
             this.toggleFullScreen()
         }
         if (e.key == " ") {
-            if (this.pause_time == 0) {
-                this.pause_time = this.last_time
-            } else {
-                this.pause_total += this.last_time - this.pause_time
-                this.pause_time = 0
-            }
+            this.timer.toggle_pause()
         }
         if (e.key == "j") {
-            if (this.pause_time != 0) {
-                this.pause_time -= 1/60
+            if (this.timer.is_paused()) {
+                this.timer.advance_pause_time(-1/60)
             }
         }
         if (e.key == "k") {
-            if (this.pause_time != 0) {
-                this.pause_time += 1/60
+            if (this.timer.is_paused()) {
+                this.timer.advance_pause_time(1/60)
             }
         }
     }
@@ -216,17 +209,13 @@ const init_webgpu = async (main: Main) => {
 
 
 
-    async function frame(elapsedMs: DOMHighResTimeStamp, main: Main) {
-        // This isn't perfectly accurate (off by 1?), averaging the last 60
-        // frametimes might be more precise.
-        const elapsed_secs = elapsedMs / 1000 + 2
-        if (elapsed_secs - main.stats_time_start > 1) {
-            console.log(`fps: ${main.num_frames}`);
-            main.num_frames = 0
-            main.stats_time_start = elapsed_secs
+    async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
+        const raw_elapsed_secs = raw_elapsed_ms / 1000
+        if (raw_elapsed_secs - main.stats_time_start > 1) {
+            console.log(`fps: fixme`);
+            main.stats_time_start = raw_elapsed_secs
         }
-        main.num_frames += 1
-        main.last_time = elapsed_secs
+        main.timer.set_raw_time(raw_elapsed_secs)
 
 
         // Write into CPU buffer, then release it
@@ -235,7 +224,7 @@ const init_webgpu = async (main: Main) => {
         const cpu_buffer = new Float32Array(segmentBufferCPU.getMappedRange());
         const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
 
-        const scene_time = (main.pause_time == 0 ? elapsed_secs : main.pause_time) - main.pause_total;
+        const scene_time = main.timer.get_scene_time()
         main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
         main.scene.draw(cpu_buffer_wrapper, scene_time);
 
@@ -292,10 +281,10 @@ const init_webgpu = async (main: Main) => {
         //console.log('input', global_constants);
         //console.log('result', result);
 
-        requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
+        requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
     }
 
-    requestAnimationFrame((elapsedMs) => frame(elapsedMs, main));
+    requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
 }
 
 var main

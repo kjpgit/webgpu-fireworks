@@ -102,14 +102,43 @@ export class Color4 {
 
 
 export class SceneTimer {
-    private readonly raw_time: number
-    private readonly raw_pause_start: number
-    private readonly raw_pause_elapsed: number
+    private raw_time: number
+    private raw_pause_start: number
+    private raw_pause_accumulated: number
 
     constructor() {
         this.raw_time = 0
-        this.raw_pause_start = 0
-        this.raw_pause_elapsed = 0
+        this.raw_pause_start = -1
+        this.raw_pause_accumulated = 0
+    }
+
+    toggle_pause() {
+        if (this.raw_pause_start < 0) {
+            // Pause
+            this.raw_pause_start = this.raw_time
+        } else {
+            // Unpause
+            this.raw_pause_accumulated += (this.raw_time - this.raw_pause_start)
+            this.raw_pause_start = -1
+        }
+    }
+
+    is_paused(): boolean {
+        return this.raw_pause_start >= 0
+    }
+
+    advance_pause_time(secs: number) {
+        this.raw_pause_start += secs
+        // Don't allow pre-history
+        this.raw_pause_start = Math.max(this.raw_pause_start, 0)
+    }
+
+    set_raw_time(raw_secs: number) {
+        this.raw_time = raw_secs
+    }
+
+    get_scene_time(): number {
+        return (this.raw_pause_start <= 0 ? this.raw_time : this.raw_pause_start) - this.raw_pause_accumulated;
     }
 }
 
