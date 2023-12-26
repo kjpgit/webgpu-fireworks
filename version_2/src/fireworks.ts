@@ -2,17 +2,19 @@ import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
+const NUM_FLARES = 400
 const WORKGROUP_SIZE_X = 128
 const WORKGROUP_SIZE_Y = 64
+
 const LAUNCH_TIME_RANGE = [0.3, 1.7]
 const LAUNCH_RANGE_X = [0.2, 0.8]
 const LAUNCH_RANGE_Y = [0.5, 0.9]
-const NUM_FLARES = 400
 const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
 const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
+const FLARE_GRAVITY_VARIANCE_RANGE = [0.8, 1.2]
 const GRAVITY = -0.04
 
 const DEBUG_COLORS: Color4[] = [
@@ -50,7 +52,6 @@ function _get_flight(vel: number, secs: number) : number {
     return t * vel
 }
 
-// 128 x 128
 class RenderPoint {
     readonly position: Vector2
     readonly size: number
@@ -90,7 +91,7 @@ class Flare {
         this.color = color
         this.duration_secs = duration_secs
         this.trail_secs = trail_secs
-        this.gravity = random_range([0.8, 1.2])
+        this.gravity = random_range(FLARE_GRAVITY_VARIANCE_RANGE)
     }
 
     public pointAtTime(secs: number, orig_pos: Vector2, aspect_ratio: number) : Vector2 {
