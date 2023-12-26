@@ -39,9 +39,21 @@ function get_random_color() : Color4 {
     return COLORS[i]
 }
 
-
 function is_onscreen(position: Vector2): boolean {
+    // todo: include size
     return (Math.min(position.x, position.y) >= 0 && Math.max(position.y, position.y) < 1)
+}
+
+function get_workgroup_index_x(x: number): number {
+    return Math.min(WORKGROUP_SIZE_X-1, Math.max(0, Math.floor(x * WORKGROUP_SIZE_X)))
+}
+
+function get_workgroup_index_y(y: number): number {
+    return Math.min(WORKGROUP_SIZE_Y-1, Math.max(0, Math.floor(y * WORKGROUP_SIZE_Y)))
+}
+
+function get_workgroup_index(index_x: number, index_y: number): number {
+    return index_x + (index_y * WORKGROUP_SIZE_X);
 }
 
 
@@ -56,15 +68,29 @@ class RenderPoint {
     readonly position: Vector2
     readonly size: number
     readonly color: Color4
-    readonly workgroup: number
 
     constructor(position: Vector2, size: number, color: Color4) {
         this.position = position
         this.size = size
         this.color = color
-        this.workgroup = Math.floor(this.position.x * WORKGROUP_SIZE_X) +
-            Math.floor(this.position.y * WORKGROUP_SIZE_Y) * WORKGROUP_SIZE_X;
-        //console.log("workgroup: " + this.workgroup);
+    }
+
+    get_workgroups(): number[] {
+        let ret = []
+        //const x_mid = get_workgroup_index_x(this.position.x)
+        //const y_mid = get_workgroup_index_y(this.position.y)
+        //ret.push(get_workgroup_index(x_mid, y_mid))
+        const x_min = get_workgroup_index_x(this.position.x - this.size)
+        const x_max = get_workgroup_index_x(this.position.x + this.size)
+        const y_min = get_workgroup_index_y(this.position.y - this.size)
+        const y_max = get_workgroup_index_y(this.position.y + this.size)
+        for (var x = x_min; x <= x_max; x++) {
+            for (var y = y_min; y <= y_max; y++) {
+                ret.push(get_workgroup_index(x,y))
+            }
+        }
+        //console.log("point workgroups: " + ret)
+        return ret
     }
 }
 
@@ -285,7 +311,9 @@ export class Scene
             this.workgroup_data[i] = []
         }
         for (const point of points) {
-            this.workgroup_data[point.workgroup].push(point)
+            for (const workgroup_id of point.get_workgroups()) {
+                this.workgroup_data[workgroup_id].push(point)
+            }
         }
 
         // Write index

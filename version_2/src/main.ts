@@ -245,7 +245,7 @@ const init_webgpu = async (main: Main) => {
     async function frame(elapsedMs: DOMHighResTimeStamp, main: Main) {
         // This isn't perfectly accurate (off by 1?), averaging the last 60
         // frametimes might be more precise.
-        const elapsed_secs = elapsedMs / 1000
+        const elapsed_secs = elapsedMs / 1000 + 2
         if (elapsed_secs - main.stats_time_start > 1) {
             console.log(`fps: ${main.num_frames}`);
             main.num_frames = 0
