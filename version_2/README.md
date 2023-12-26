@@ -1,19 +1,5 @@
 ## Overview
 
-### CPU
-
-Generates 400 tiles
-
-### Compute Shader
-
-Grabs a tile
-Writes output to storage
-
-
-### Fagment Shader
-
-Draws from storage
-
 
 ## Building
 
@@ -35,7 +21,3 @@ host it on HTTPS to get WebGPU access.
 * Atomics can only be i32/u32, but javascript can't output those (for debugging)
 
 * .slice() needs args?
-
-* wtf is createBindGroupLayout for? I have to specify things thrice?
-  (shader/bind/bindlayout)
-
