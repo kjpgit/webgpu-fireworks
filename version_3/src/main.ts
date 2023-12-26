@@ -165,12 +165,6 @@ const init_webgpu = async (main: Main) => {
         usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
     })
 
-//    const resultBuffer = device.createBuffer({
-//        size: global_constants.byteLength,
-//        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-//    });
-
-
 
     // Render pipeline (simple quad vertex and fragment shader)
     const shaderModule = device.createShaderModule({
