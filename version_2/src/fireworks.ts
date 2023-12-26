@@ -2,7 +2,8 @@ import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
-const WORKGROUP_SIZE = 256
+const WORKGROUP_SIZE_X = 128
+const WORKGROUP_SIZE_Y = 64
 const LAUNCH_TIME_RANGE = [0.3, 1.7]
 const LAUNCH_RANGE_X = [0.2, 0.8]
 const LAUNCH_RANGE_Y = [0.5, 0.9]
@@ -10,7 +11,7 @@ const NUM_FLARES = 400
 const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
-const FLARE_SIZE_RANGE = [0.001, 0.002]
+const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
@@ -37,6 +38,11 @@ function get_random_color() : Color4 {
 }
 
 
+function is_onscreen(position: Vector2): boolean {
+    return (Math.min(position.x, position.y) >= 0 && Math.max(position.y, position.y) < 1)
+}
+
+
 // Return distance traveled due to initial explosion force
 // Simulate air drag - velocity tapers off exponentially
 function _get_flight(vel: number, secs: number) : number {
@@ -55,7 +61,8 @@ class RenderPoint {
         this.position = position
         this.size = size
         this.color = color
-        this.workgroup = Math.floor(this.position.x * WORKGROUP_SIZE);
+        this.workgroup = Math.floor(this.position.x * WORKGROUP_SIZE_X) +
+            Math.floor(this.position.y * WORKGROUP_SIZE_Y) * WORKGROUP_SIZE_X;
         //console.log("workgroup: " + this.workgroup);
     }
 }
@@ -214,10 +221,10 @@ class Firework {
         let start_position = flare.pointAtTime(start_time, this.pos, aspect_ratio)
         let start_color = flare.colorAtTime(start_time)
 
-        if (end_position.x >= 0 && end_position.x < 1.0) {
+        if (is_onscreen(end_position)) {
             points.push(new RenderPoint(end_position, size, end_color))
         }
-        if (start_position.x >= 0 && start_position.x < 1.0) {
+        if (is_onscreen(start_position)) {
             points.push(new RenderPoint(start_position, size, start_color))
         }
 
@@ -244,10 +251,13 @@ export class Scene
     private next_stats: number = 0
     private stats_max_buffer: number = 0
     private x_aspect_ratio: number = 0
+    private workgroup_data: RenderPoint[][] = []
 
     constructor() {
         this.m_fireworks = new Array();
         this.next_launch = 0;
+
+        this.workgroup_data = new Array(WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y)
     }
 
     set_screen_size(width: number, height: number) {
@@ -269,19 +279,18 @@ export class Scene
             fw.draw(time, this.x_aspect_ratio, points)
         }
 
-        // Bin points into WORKGROUP_SIZE buckets
-        var workgroup_data: RenderPoint[][] = []
-        for (var w = 0; w < WORKGROUP_SIZE; w++) {
-            workgroup_data[w] = [];
+        // Bin points into WORKGROUP_SIZE buckets - O(N)
+        for (var i = 0; i < this.workgroup_data.length; i++) {
+            this.workgroup_data[i] = []
         }
         for (const point of points) {
-            workgroup_data[point.workgroup].push(point)
+            this.workgroup_data[point.workgroup].push(point)
         }
 
         // Write index
         var idx_start = 0;
-        for (var w = 0; w < WORKGROUP_SIZE; w++) {
-            var workgroup_len = workgroup_data[w].length;
+        for (var w = 0; w < this.workgroup_data.length; w++) {
+            var workgroup_len = this.workgroup_data[w].length;
             //console.log(`workgroup ${w} ${idx_start} len=${workgroup_len}`);
             buffer.append_raw(idx_start);
             buffer.append_raw(workgroup_len);
@@ -289,8 +298,8 @@ export class Scene
         }
 
         // Write data
-        for (var w = 0; w < WORKGROUP_SIZE; w++) {
-            for (const point of workgroup_data[w]) {
+        for (var w = 0; w < this.workgroup_data.length; w++) {
+            for (const point of this.workgroup_data[w]) {
                 buffer.append_raw(point.position.x)
                 buffer.append_raw(point.position.y)
                 buffer.append_raw(point.size);

@@ -1,9 +1,10 @@
 export var ComputeCode = `
 
-const WORKGROUP_SIZE = 256;
+const WORKGROUP_SIZE_X = 128;
+const WORKGROUP_SIZE_Y = 64;
 
 struct WorkQueue {
-    index: array<LineIndex, WORKGROUP_SIZE>,
+    index: array<LineIndex, WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y>,
     segments: array<LineSegment>,
 }
 
@@ -59,7 +60,7 @@ fn compute_main(
 
     if (false) {
         // Workqueue tile grid
-        var tile_x = step(0.5, fract(x_ratio * WORKGROUP_SIZE / 2));
+        var tile_x = step(0.5, fract(x_ratio * WORKGROUP_SIZE_X / 2));
         var color = vec4<f32>(tile_x, tile_x, tile_x, 1.0);
         textureStore(g_output_pixels, vec2(x, y), color);
         return;
@@ -67,8 +68,9 @@ fn compute_main(
 
     if (true) {
         // Rasterize segments
-        var my_block_id = u32(floor(x_ratio * WORKGROUP_SIZE));
-        //var my_block_id = u32(x / u32(WORKGROUP_SIZE));
+        var my_block_id = u32(floor(x_ratio * WORKGROUP_SIZE_X))
+                        + u32(floor(y_ratio * WORKGROUP_SIZE_Y) * WORKGROUP_SIZE_X);
+
         var start_index = u32(g_work_queue.index[my_block_id].start_index);
         var num_segments = u32(g_work_queue.index[my_block_id].num_segments);
         //var num_segments = 1000u;
