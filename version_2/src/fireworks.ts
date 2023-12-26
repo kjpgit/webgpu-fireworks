@@ -3,12 +3,14 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
 const WORKGROUP_SIZE = 256
-const LAUNCH_TIME_RANGE = [2.1, 2.7]
-const NUM_FLARES = 100
+const LAUNCH_TIME_RANGE = [0.3, 1.7]
+const LAUNCH_RANGE_X = [0.2, 0.8]
+const LAUNCH_RANGE_Y = [0.5, 0.9]
+const NUM_FLARES = 400
 const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 //const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
-const FLARE_SIZE_RANGE = [0.002, 0.010]
+const FLARE_SIZE_RANGE = [0.001, 0.002]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const GRAVITY = -0.04
 
@@ -72,6 +74,7 @@ class Flare {
 
     // How far back the trail goes (plume mode)
     readonly trail_secs: number
+    readonly gravity: number
 
     constructor(velocity_vec: Vector2, size: number, color: Color4,
                 duration_secs: number, trail_secs: number) {
@@ -80,16 +83,17 @@ class Flare {
         this.color = color
         this.duration_secs = duration_secs
         this.trail_secs = trail_secs
+        this.gravity = random_range([0.8, 1.2])
     }
 
-    public pointAtTime(secs: number, orig_pos: Vector2) : Vector2 {
+    public pointAtTime(secs: number, orig_pos: Vector2, aspect_ratio: number) : Vector2 {
         let ret = orig_pos.clone();
-        ret.x += _get_flight(this.velocity_vec.x, secs)
+        ret.x += _get_flight(this.velocity_vec.x, secs) * aspect_ratio
         ret.y += _get_flight(this.velocity_vec.y, secs)
         //ret.z += _get_flight(velocity_vec.z, secs: secs)
 
         // Gravity
-        ret.y += (GRAVITY * secs * secs)
+        ret.y += (GRAVITY * secs * secs * this.gravity)
 
         return ret
     }
@@ -114,8 +118,8 @@ class Firework {
 
     // Create a random firework
     constructor(time: number) {
-        const pos_x = random_range([0.1, 0.9])
-        const pos_y = random_range([0.5, 0.9])
+        const pos_x = random_range(LAUNCH_RANGE_X)
+        const pos_y = random_range(LAUNCH_RANGE_Y)
 
         this.pos = new Vector2(pos_x, pos_y)
         this.type = Math.floor(random_range([0, 2]))
@@ -184,7 +188,7 @@ class Firework {
         if (secs > flare.duration_secs) {
             return
         }
-        let p = flare.pointAtTime(secs, this.pos)
+        let p = flare.pointAtTime(secs, this.pos, 1.9)
         let color = flare.colorAtTime(secs)
         if (secs > (flare.duration_secs - 0.1)) {
             // flash out
@@ -203,18 +207,19 @@ class Firework {
         }
 
         let size = flare.size;
-        let end_position = flare.pointAtTime(secs, this.pos)
+        let end_position = flare.pointAtTime(secs, this.pos, aspect_ratio)
         let end_color = flare.colorAtTime(secs)
 
         let start_time = Math.max(secs - flare.trail_secs, 0)
-        let start_position = flare.pointAtTime(start_time, this.pos)
+        let start_position = flare.pointAtTime(start_time, this.pos, aspect_ratio)
         let start_color = flare.colorAtTime(start_time)
 
-        end_position.x *= aspect_ratio;
-        start_position.x *= aspect_ratio;
-
-        points.push(new RenderPoint(end_position, size, end_color))
-        points.push(new RenderPoint(start_position, size, start_color))
+        if (end_position.x >= 0 && end_position.x < 1.0) {
+            points.push(new RenderPoint(end_position, size, end_color))
+        }
+        if (start_position.x >= 0 && start_position.x < 1.0) {
+            points.push(new RenderPoint(start_position, size, start_color))
+        }
 
         //buffer.append_raw(end_position.x)
         //buffer.append_raw(end_position.y)
@@ -263,38 +268,36 @@ export class Scene
         for (const fw of this.m_fireworks) {
             fw.draw(time, this.x_aspect_ratio, points)
         }
-        points.sort((a, b) => (a.workgroup - b.workgroup))
 
-        var workgroup_counts = []
-        var workgroup_start_indexes = []
+        // Bin points into WORKGROUP_SIZE buckets
+        var workgroup_data: RenderPoint[][] = []
         for (var w = 0; w < WORKGROUP_SIZE; w++) {
-            workgroup_counts[w] = 0;
-            workgroup_start_indexes[w] = 0;
+            workgroup_data[w] = [];
         }
-
-        var idx = 0;
-        var workgroup_count = 0;
-        var last_workgroup_id = -1;
         for (const point of points) {
-            if (point.workgroup !== last_workgroup_id) {
-                console.log("new workgroup: " + point.workgroup)
-                workgroup_start_indexes[point.workgroup] = idx;
-                workgroup_counts[point.workgroup] = workgroup_count;
-                last_workgroup_id = point.workgroup
-                workgroup_count = 0;
-            }
-            buffer.append_raw(point.position.x)
-            buffer.append_raw(point.position.y)
-            buffer.append_raw(point.size);
-            buffer.append_raw(0.0);
-            buffer.append_raw_color4(point.color)
-            idx += 1;
-            workgroup_count += 1;
+            workgroup_data[point.workgroup].push(point)
         }
-        workgroup_counts[last_workgroup_id] = workgroup_count;
 
-        console.log("workgroup_start_indexes: " + workgroup_start_indexes);
-        console.log("workgroup_counts: " + workgroup_counts);
+        // Write index
+        var idx_start = 0;
+        for (var w = 0; w < WORKGROUP_SIZE; w++) {
+            var workgroup_len = workgroup_data[w].length;
+            //console.log(`workgroup ${w} ${idx_start} len=${workgroup_len}`);
+            buffer.append_raw(idx_start);
+            buffer.append_raw(workgroup_len);
+            idx_start += workgroup_len;
+        }
+
+        // Write data
+        for (var w = 0; w < WORKGROUP_SIZE; w++) {
+            for (const point of workgroup_data[w]) {
+                buffer.append_raw(point.position.x)
+                buffer.append_raw(point.position.y)
+                buffer.append_raw(point.size);
+                buffer.append_raw(0.0);
+                buffer.append_raw_color4(point.color)
+            }
+        }
 
         if (buffer.bytes_used() > this.stats_max_buffer) {
             this.stats_max_buffer = buffer.bytes_used()
