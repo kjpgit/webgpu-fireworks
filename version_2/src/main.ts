@@ -94,32 +94,6 @@ class Main
             elem.msExitFullscreen()
         }
     }
-
-    draw_uniform(width: number, height: number, elapsedSecs: number, buffer: BufferWrapper) {
-        const delta = Math.sin(elapsedSecs * 8) / 8;
-        var vertices = [
-            width, height, 4, 0,
-            0.0 + delta, -0.2, 1, 1,
-            0.95, 0.95, 1, 1,
-            0.0, 1.0, 0.0, 1,
-
-            -0.95, 0.95, 1, 1,
-            -0.95, -0.95, 1, 1,
-            1.0, 0.0, 1.0, 1,
-
-            0.0, 0.0, 1, 1,
-            0.0, -0.95, 1, 1,
-            0.0, 0.0, 1.0, 1,
-
-            -0.8, -0.1, 1, 1,
-            0.8, -0.1, 1, 1,
-            1.0, 0.0, 0.0, 1,
-        ]
-        for (const f of vertices) {
-            buffer.append_raw(f)
-        }
-    }
-
 }
 
 
@@ -170,10 +144,10 @@ const init_webgpu = async (main: Main) => {
     const global_constants = new Float32Array([
         canvas.width,
         canvas.height,
-        100,  // nr_segments,
-        99,
-        1, 1, 1, 1, // color
-        99, 99, 99, 99, // fill
+        0,  // unused,
+        0,  // unused
+        1, 1, 1, 1, // debug color
+        99, 99, 99, 99, // fill to min buffer size
     ]);
 
     const constantsBuffer = device.createBuffer({
