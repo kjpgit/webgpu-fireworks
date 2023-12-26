@@ -1,6 +1,5 @@
-// Safe wrapper for an array of floats.
-// Ensures we don't add more data than is allocated
-
+// NB: Writing past a TypedArray's max size does not throw any error,
+// the write is simply ignored.
 export class BufferWrapper {
     private buffer: Float32Array
     private max_elements: number
@@ -27,25 +26,6 @@ export class BufferWrapper {
     has_available(elements: number): boolean {
         return this.available() >= elements
     }
-
-    // If capacity is full, do nothing
-
-    /*
-    append_array(v: Float32Array) {
-        this.buffer.set(v, this.nr_elements)
-        this.nr_elements += v.length
-    }
-   */
-
-  /*
-    appendVector3(v: Vector3) {
-        if (this.has_available(3)) {
-            this.append_raw(v.x)
-            this.append_raw(v.y)
-            this.append_raw(v.z)
-        }
-    }
-   */
 
     append_raw_color4(v: Color4) {
         this.append_raw(v.r)
@@ -80,13 +60,8 @@ export class Vector3 {
     toString(): string {
         return `x:${this.x}, y:${this.y}, z:${this.z}`;
     }
-
-    /*
-    length(): number {
-        return Math.sqrt((this.x * this.x) + (this.y * this.y) + (this.z * this.z))
-    }
-   */
 }
+
 
 export class Vector2 {
     x: number = 0
@@ -122,6 +97,19 @@ export class Color4 {
 
     clone(): Color4 {
         return new Color4(this.r, this.g, this.b, this.a);
+    }
+}
+
+
+export class SceneTimer {
+    private readonly raw_time: number
+    private readonly raw_pause_start: number
+    private readonly raw_pause_elapsed: number
+
+    constructor() {
+        this.raw_time = 0
+        this.raw_pause_start = 0
+        this.raw_pause_elapsed = 0
     }
 }
 
