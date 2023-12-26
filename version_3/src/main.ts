@@ -11,15 +11,16 @@ export function do_throw(errorMessage: string): never {
 
 class Main
 {
-    is_fullscreen = false
-    max_segment_buffer_nr_bytes = 0
-    stats_time_start = 0
-    scene: Scene
-    timer: SceneTimer
     readonly MAX_SEGMENT_BUFFER_SIZE = 20000000
 
+    is_fullscreen = false
+    max_segment_buffer_nr_bytes = 0
+    last_stats_time = 0
+    scene: Scene
+    scene_timer: SceneTimer
+
     constructor() {
-        this.timer = new SceneTimer()
+        this.scene_timer = new SceneTimer()
         this.scene = new Scene()
 
         addEventListener("dblclick", e => this.on_double_click(e))
@@ -37,16 +38,16 @@ class Main
             this.toggleFullScreen()
         }
         if (e.key == " ") {
-            this.timer.toggle_pause()
+            this.scene_timer.toggle_pause()
         }
         if (e.key == "j") {
-            if (this.timer.is_paused()) {
-                this.timer.advance_pause_time(-1/60)
+            if (this.scene_timer.is_paused()) {
+                this.scene_timer.advance_pause_time(-1/60)
             }
         }
         if (e.key == "k") {
-            if (this.timer.is_paused()) {
-                this.timer.advance_pause_time(1/60)
+            if (this.scene_timer.is_paused()) {
+                this.scene_timer.advance_pause_time(1/60)
             }
         }
     }
@@ -150,8 +151,8 @@ const init_webgpu = async (main: Main) => {
     });
     device.queue.writeBuffer(constantsBuffer, 0, global_constants);
 
-    const cpu_buffer = new Float32Array(main.MAX_SEGMENT_BUFFER_SIZE)
-    const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer)
+    const segmentDataCPU = new Float32Array(main.MAX_SEGMENT_BUFFER_SIZE)
+    const segment_data_wrapper = new BufferWrapper(segmentDataCPU)
 
     const segmentBufferGPU = device.createBuffer({
         size: main.MAX_SEGMENT_BUFFER_SIZE,
@@ -210,22 +211,22 @@ const init_webgpu = async (main: Main) => {
 
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
-        if (raw_elapsed_secs - main.stats_time_start > 1) {
-            console.log(`max segment_buffer_nr_bytes: ${main.max_segment_buffer_nr_bytes}`)
+        if (raw_elapsed_secs - main.last_stats_time > 1) {
+            console.log(`max_segment_buffer_nr_bytes: ${main.max_segment_buffer_nr_bytes}`)
             console.log(`fps: fixme`);
-            main.stats_time_start = raw_elapsed_secs
+            main.last_stats_time = raw_elapsed_secs
+            main.max_segment_buffer_nr_bytes = 0
         }
-        main.timer.set_raw_time(raw_elapsed_secs)
-
 
         // CPU Work Start ----------------------
-        const scene_time = main.timer.get_scene_time()
-        cpu_buffer_wrapper.clear();
+        main.scene_timer.set_raw_time(raw_elapsed_secs)
+        const scene_time = main.scene_timer.get_scene_time()
+        segment_data_wrapper.clear();
         main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
-        main.scene.draw(cpu_buffer_wrapper, scene_time);
+        main.scene.draw(segment_data_wrapper, scene_time);
 
-        const segment_buffer_nr_bytes = cpu_buffer_wrapper.bytes_used();
-        device.queue.writeBuffer(segmentBufferGPU, 0, cpu_buffer, 0, cpu_buffer_wrapper.elements_used())
+        const segment_buffer_nr_bytes = segment_data_wrapper.bytes_used();
+        device.queue.writeBuffer(segmentBufferGPU, 0, segmentDataCPU, 0, segment_data_wrapper.elements_used())
         if (segment_buffer_nr_bytes > main.max_segment_buffer_nr_bytes) {
             main.max_segment_buffer_nr_bytes = segment_buffer_nr_bytes
         }
