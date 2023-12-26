@@ -141,7 +141,7 @@ const init_webgpu = async (main: Main) => {
     const context = canvas.getContext("webgpu") ?? do_throw("Canvas does not support WebGPU");
 
     // Configure the swap chain
-    const devicePixelRatio = window.devicePixelRatio || 1;
+    const devicePixelRatio = 1; //window.devicePixelRatio || 1;
     console.log(`devicePixelRatio is ${devicePixelRatio}`);
     canvas.width = canvas.clientWidth * devicePixelRatio;
     canvas.height = canvas.clientHeight * devicePixelRatio;
@@ -262,7 +262,7 @@ const init_webgpu = async (main: Main) => {
         const cpu_buffer_wrapper = new BufferWrapper(cpu_buffer);
 
         const scene_time = (main.pause_time == 0 ? elapsed_secs : main.pause_time) - main.pause_total;
-        main.scene.set_screen_size(canvas.width, canvas.height)
+        main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
         main.scene.draw(cpu_buffer_wrapper, scene_time);
 
         const cpu_buffer_bytes_used = cpu_buffer_wrapper.bytes_used();

@@ -2,19 +2,23 @@ import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
-const NUM_FLARES = 400
+const NUM_FLARES = 800
 const WORKGROUP_SIZE_X = 128
 const WORKGROUP_SIZE_Y = 64
 
 const LAUNCH_TIME_RANGE = [0.3, 1.7]
-const LAUNCH_RANGE_X = [0.2, 0.8]
+const LAUNCH_RANGE_X = [0.1, 0.9]
 const LAUNCH_RANGE_Y = [0.5, 0.9]
-const FLARE_VELOCITY_RANGE = [0.1, 0.2]  // fixme: this doesn't make much sense
+
 const FLARE_DURATION_RANGE = [1.0, 4.0]
-//const FLARE_TRAIL_TIME_RANGE = [0.3, 0.7]
 const FLARE_SIZE_RANGE = [0.003, 0.007]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const FLARE_GRAVITY_VARIANCE_RANGE = [0.8, 1.2]
+
+const FIREWORK_VARIANCE_AIRDRAG = [1.0, 3.0, 1]
+const FIREWORK_VARIANCE_VELOCITY = [0.1, 0.2, 0.1]
+const FIREWORK_VARIANCE_SIZE = [0.5, 3.0, 0.5]
+
 const GRAVITY = -0.04
 
 const DEBUG_COLORS: Color4[] = [
@@ -59,8 +63,8 @@ function get_workgroup_index(index_x: number, index_y: number): number {
 
 // Return distance traveled due to initial explosion force
 // Simulate air drag - velocity tapers off exponentially
-function _get_flight(vel: number, secs: number) : number {
-    let t = Math.log10(1 + secs * 10.0)
+function _get_flight(vel: number, secs: number, variance: number) : number {
+    let t = Math.log10(1 + secs * 10.0 * variance)
     return t * vel
 }
 
@@ -120,27 +124,6 @@ class Flare {
         this.gravity = random_range(FLARE_GRAVITY_VARIANCE_RANGE)
     }
 
-    public pointAtTime(secs: number, orig_pos: Vector2, aspect_ratio: number) : Vector2 {
-        let ret = orig_pos.clone();
-        ret.x += _get_flight(this.velocity_vec.x, secs) * aspect_ratio
-        ret.y += _get_flight(this.velocity_vec.y, secs)
-        //ret.z += _get_flight(velocity_vec.z, secs: secs)
-
-        // Gravity
-        ret.y += (GRAVITY * secs * secs * this.gravity)
-
-        return ret
-    }
-
-    public colorAtTime(secs: number) : Color4 {
-        // Linear fade out is fine.  Note we can start with a > 1.0,
-        // so it actually appears exponential.
-        let ret = this.color.clone()
-        let percent = secs / this.duration_secs  // 0 - 1
-        let factor = smoothstep(0, 1, 1-percent)
-        ret.a *= factor
-        return ret
-    }
 }
 
 
@@ -149,6 +132,9 @@ class Firework {
     readonly start_time: number
     readonly type: number
     readonly m_flares: Flare[]
+    readonly variance_airdrag: number
+    readonly variance_velocity: number
+    readonly variance_size: number
 
     // Create a random firework
     constructor(time: number) {
@@ -159,6 +145,11 @@ class Firework {
         this.type = Math.floor(random_range([0, 2]))
         this.type = 1;
         this.start_time = time
+
+        this.variance_airdrag = random_range(FIREWORK_VARIANCE_AIRDRAG)
+        this.variance_velocity = random_range(FIREWORK_VARIANCE_VELOCITY)
+        this.variance_size = random_range(FIREWORK_VARIANCE_SIZE)
+
         this.m_flares = new Array()
         this.add_flares(NUM_FLARES)
     }
@@ -171,9 +162,6 @@ class Firework {
 
         for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector2D()
-            let speed = random_range(FLARE_VELOCITY_RANGE)
-            velocity.x *= speed
-            velocity.y *= speed
 
             // color variance
             let color = orig_color.clone()
@@ -217,6 +205,7 @@ class Firework {
         }
     }
 
+    /*
     private render_flare_simple(flare: Flare, secs: number, points: BufferWrapper)
     {
         if (secs > flare.duration_secs) {
@@ -232,6 +221,7 @@ class Firework {
         //draw_triangle_2d(buffer, p, size, size, color)
         //draw_triangle_2d(buffer, p, size, -size, color)
     }
+   */
 
 
     private render_flare_trail(flare: Flare, secs: number, points: RenderPoint[], aspect_ratio: number)
@@ -240,33 +230,46 @@ class Firework {
             return
         }
 
-        let size = flare.size;
-        let end_position = flare.pointAtTime(secs, this.pos, aspect_ratio)
-        let end_color = flare.colorAtTime(secs)
-
-        let start_time = Math.max(secs - flare.trail_secs, 0)
-        let start_position = flare.pointAtTime(start_time, this.pos, aspect_ratio)
-        let start_color = flare.colorAtTime(start_time)
+        let size = flare.size * this.variance_size;
+        let end_position = this.pointAtTime(flare, secs, aspect_ratio)
+        let end_color = this.colorAtTime(flare, secs)
 
         if (is_onscreen(end_position)) {
             points.push(new RenderPoint(end_position, size, end_color))
         }
+
+        /*
+        let start_time = Math.max(secs - flare.trail_secs, 0)
+        let start_position = flare.pointAtTime(start_time, this.pos, aspect_ratio)
+        let start_color = flare.colorAtTime(start_time)
+
         if (is_onscreen(start_position)) {
             points.push(new RenderPoint(start_position, size, start_color))
         }
-
-        //buffer.append_raw(end_position.x)
-        //buffer.append_raw(end_position.y)
-        //buffer.append_raw(size);
-        //buffer.append_raw(0.0);
-        //buffer.append_raw_color4(end_color)
-
-        //buffer.append_raw(start_position.x)
-        //buffer.append_raw(start_position.y)
-        //buffer.append_raw(size);
-        //buffer.append_raw(0.0);
-        //buffer.append_raw_color4(start_color)
+       */
     }
+
+    public pointAtTime(flare: Flare, secs: number, aspect_ratio: number) : Vector2 {
+        let ret = this.pos.clone();
+        ret.x += _get_flight(flare.velocity_vec.x * this.variance_velocity, secs, this.variance_airdrag) / aspect_ratio
+        ret.y += _get_flight(flare.velocity_vec.y * this.variance_velocity, secs, this.variance_airdrag)
+
+        // Gravity
+        ret.y += (GRAVITY * secs * secs * flare.gravity)
+
+        return ret
+    }
+
+    public colorAtTime(flare: Flare, secs: number) : Color4 {
+        // Linear fade out is fine.  Note we can start with a > 1.0,
+        // so it actually appears exponential.
+        let ret = flare.color.clone()
+        let percent = secs / flare.duration_secs  // 0 - 1
+        let factor = smoothstep(0, 1, 1-percent)
+        ret.a *= factor
+        return ret
+    }
+
 }
 
 
@@ -277,7 +280,7 @@ export class Scene
     private next_launch: number = 0
     private next_stats: number = 0
     private stats_max_buffer: number = 0
-    private x_aspect_ratio: number = 0
+    private aspect_ratio: number = 0
     private workgroup_data: RenderPoint[][] = []
 
     constructor() {
@@ -287,8 +290,8 @@ export class Scene
         this.workgroup_data = new Array(WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y)
     }
 
-    set_screen_size(width: number, height: number) {
-        this.x_aspect_ratio = height / width
+    set_aspect_ratio(ratio: number) {
+        this.aspect_ratio = ratio
     }
 
     draw(buffer: BufferWrapper, time: number)
@@ -303,7 +306,7 @@ export class Scene
 
         var points: RenderPoint[] = []
         for (const fw of this.m_fireworks) {
-            fw.draw(time, this.x_aspect_ratio, points)
+            fw.draw(time, this.aspect_ratio, points)
         }
 
         // Bin points into WORKGROUP_SIZE buckets - O(N)

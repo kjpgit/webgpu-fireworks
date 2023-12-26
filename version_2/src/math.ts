@@ -31,6 +31,11 @@ export function random_range(arr: number[]): number {
     }
     let delta = upper - lower
     let ret = (my_random() * delta) + lower
+
+    if (arr.length > 2) {
+        const round_to = arr[2];
+        ret = Math.round(ret / round_to) * round_to;
+    }
     return ret
 }
 
