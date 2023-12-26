@@ -218,7 +218,9 @@ const init_webgpu = async (main: Main) => {
             main.max_segment_buffer_nr_bytes = 0
         }
 
-        // CPU Work Start ----------------------
+
+        // CPU Work Start -- timed
+        const perf_cpu_start = performance.now()
         main.scene_timer.set_raw_time(raw_elapsed_secs)
         const scene_time = main.scene_timer.get_scene_time()
         segment_data_wrapper.clear();
@@ -230,8 +232,11 @@ const init_webgpu = async (main: Main) => {
         if (segment_buffer_nr_bytes > main.max_segment_buffer_nr_bytes) {
             main.max_segment_buffer_nr_bytes = segment_buffer_nr_bytes
         }
+        const perf_cpu_end = performance.now()
 
-        // GPU Work Start ----------------------
+
+        // GPU Work Start -- timed
+        const perf_gpu_start = perf_cpu_end
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
@@ -267,6 +272,10 @@ const init_webgpu = async (main: Main) => {
         renderPass.end();
 
         device.queue.submit([encoder.finish()]);
+        device.queue.onSubmittedWorkDone().then(() => {
+            const perf_gpu_end = performance.now()
+            console.log(`cpu ${perf_cpu_end - perf_cpu_start}, gpu ${perf_gpu_end - perf_gpu_start}`)
+        })
 
         requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
     }
