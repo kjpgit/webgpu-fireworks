@@ -208,7 +208,6 @@ const init_webgpu = async (main: Main) => {
     });
 
 
-
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
@@ -275,17 +274,16 @@ const init_webgpu = async (main: Main) => {
         device.queue.onSubmittedWorkDone().then(() => {
             const perf_gpu_end = performance.now()
             console.log(`cpu ${perf_cpu_end - perf_cpu_start}, gpu ${perf_gpu_end - perf_gpu_start}`)
+            requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
         })
-
-        requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
     }
 
     requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
 }
 
-var main
+
 try {
-    main = new Main()
+    let main = new Main()
     await init_webgpu(main)
 } catch (err: any) {
     const errDiv = document.getElementById("error-message")!
