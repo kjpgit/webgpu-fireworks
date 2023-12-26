@@ -1,4 +1,4 @@
-import { BufferWrapper } from "./buffer.js"
+import { BufferWrapper } from "./util.js"
 import { Scene } from "./fireworks.js"
 import { ComputeCode } from "./compute.wgsl.js"
 import { FragmentCode } from "./fragment.wgsl.js"

@@ -1,4 +1,4 @@
-import { BufferWrapper, Vector2, Color4  } from "./buffer.js";
+import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 
