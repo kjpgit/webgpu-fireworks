@@ -7,4 +7,3 @@ Fireworks using a normal vertex/triangle/fragment pipeline
 Software particle rendering, which uses a compute shader!  (My first
 ever shader!)
 
-https://www.youtube.com/watch?v=eviSykqSUUw&t=1616s  nanite
