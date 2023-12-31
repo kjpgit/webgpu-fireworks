@@ -142,11 +142,11 @@ const init_webgpu = async (main: Main) => {
     const rough_module = device.createShaderModule({
         label: 'rough_module', code: ComputeCode,
     });
-    const fine_module = device.createShaderModule({
-        label: 'fine_module', code: RasterizeCode,
-    });
     const bin_module = device.createShaderModule({
         label: 'bin_module', code: BinCode,
+    });
+    const fine_module = device.createShaderModule({
+        label: 'fine_module', code: RasterizeCode,
     });
     const quad_fragment_module = device.createShaderModule({
         label: 'quad_fragment_module', code: FragmentCode,
@@ -218,14 +218,8 @@ const init_webgpu = async (main: Main) => {
         primitive: { topology: "triangle-list", },
     });
 
-    const renderBG = device.createBindGroup({
-        label: "renderBG",
-        layout: renderPipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: { buffer: output_texture_gpu, } },
-        ],
-    });
 
+    // Bind Groups
     const rough_bg = device.createBindGroup({
         label: "rough_bg",
         layout: rough_pipeline.getBindGroupLayout(0),
@@ -259,7 +253,13 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
-    const scene = main.scene
+    const renderBG = device.createBindGroup({
+        label: "renderBG",
+        layout: renderPipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: output_texture_gpu, } },
+        ],
+    });
 
 
     // --------------------------------
@@ -267,6 +267,7 @@ const init_webgpu = async (main: Main) => {
     // --------------------------------
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
+        const scene = main.scene
         if (raw_elapsed_secs - main.last_stats_time > 1) {
             console.log(`[fps] frames:                 ${main.fps_monitor.frame_data.length}`)
             console.log(`[fps] cpu time:               ${main.fps_monitor.get_timing_info(0)}`);
@@ -290,6 +291,7 @@ const init_webgpu = async (main: Main) => {
         // GPU Work Start -------------------------------------------------
         // Upload data and commands to GPU
         const perf_gpu_start = perf_cpu_end
+        main.log_perf(`uploading ${scene.uniform_wrapper.bytes_used}, ${scene.firework_wrapper.bytes_used}`)
         device.queue.writeBuffer(uniform_buffer_gpu, 0, scene.uniform_wrapper.bytes, 0,
                                  scene.uniform_wrapper.bytes_used)
         device.queue.writeBuffer(rough_buffer_gpu, 0, scene.firework_wrapper.bytes, 0,
@@ -336,7 +338,7 @@ const init_webgpu = async (main: Main) => {
             perf_compute_results_mapped = performance.now()
             const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
             if (main.debug_show_histogram) {
-                main.log_perf(`histogram ${main.scene.get_histogram(result)}`);
+                main.log_perf(`histogram ${scene.get_histogram(result)}`);
             }
             misc_buffer_cpu.unmap()
         }) // mapAsync callback end
