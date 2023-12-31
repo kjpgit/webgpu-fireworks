@@ -258,9 +258,9 @@ const init_webgpu = async (main: Main) => {
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
-            console.log(`fps compute start to results: ${main.fps_monitor.get_timing_info(2)}`);
-            //console.log(`fps frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
-            //console.log(`fps frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`fps frame time cpu:     ${main.fps_monitor.get_timing_info(0)}`);
+            console.log(`fps frame time gpu:     ${main.fps_monitor.get_timing_info(2)}`);
+            console.log(`- fps map() histogram:  ${main.fps_monitor.get_timing_info(1)}`);
             main.last_stats_time = raw_elapsed_secs
             main.fps_monitor.clear()
         }
@@ -329,7 +329,7 @@ const init_webgpu = async (main: Main) => {
 
         misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
             main.log_perf(`got results back and mapped`);
-            perf_compute_end = performance.now()
+            perf_compute_results_mapped = performance.now()
             const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
             if (main.debug_show_histogram) {
                 main.log_perf(`histogram ${main.scene.get_histogram(result)}`);
