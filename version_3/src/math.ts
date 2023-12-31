@@ -12,6 +12,7 @@ const MYRANDOM_VALS = [
 
 var g_rand_idx = 0;
 
+
 // Return number in range [0, 1)
 function my_random(): number
 {
@@ -38,6 +39,16 @@ export function random_range(arr: number[]): number {
     }
     return ret
 }
+
+export function clamp(f: number): number {
+    return Math.max(0, Math.min(1.0, f))
+}
+
+export function float_to_u8(f: number): number {
+    return Math.floor(0.5 + 255 * clamp(f))
+}
+
+
 
 // If @value <= @min, return 0
 // If @value >= @max, return 1

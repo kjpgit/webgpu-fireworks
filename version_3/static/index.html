@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <!--
 
-  Copyright (C) 2023 Karl Pickett
+  webgpu-fireworks Copyright (C) 2023 Karl Pickett
+  All rights reserved
 
   Typescript source code:
     https://github.com/kjpgit/webgpu-fireworks
-
-  Ported from my 2015 Swift/Metal fireworks demo (OLD):
-    https://github.com/kjpgit/metal-fireworks
 
 -->
 <html lang="en">
@@ -16,16 +14,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Karl Pickett - Demo 2</title>
+    <title>Karl Pickett - Demo 3</title>
 
     <style>
-      body, html { margin: 0; }
-      body, html { height: 100%; }
+      html { margin: 0; padding: 0; height: 100%; background-color: #333333; }
+      body { margin: 0; padding: 0; padding-top: 50px; background-color: #333333; }
       .hidden { display: none; }
       canvas {
         display: block;
-        width: 100%;
-        height: 100%;
+        margin: auto;
+        border: 3px solid black;
+        width: 1792px;
+        height: 640px;
+        //width: 100%;
+        //height: 100%;
       }
     </style>
   </head>

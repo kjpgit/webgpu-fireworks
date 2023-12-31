@@ -1,21 +1,28 @@
-import { FPSMonitor, SceneTimer, BufferWrapper } from "./util.js"
+// webgpu-fireworks Copyright (C) 2023 Karl Pickett
+// All rights reserved
+
+import * as constants from "./constants.js"
+import { FPSMonitor, SceneTimer, BufferWrapper, do_throw } from "./util.js"
 import { Scene } from "./fireworks.js"
 import { ComputeCode } from "./compute.wgsl.js"
+import { RasterizeCode } from "./rasterize.wgsl.js"
 import { FragmentCode } from "./fragment.wgsl.js"
-
-
-export function do_throw(errorMessage: string): never {
-    throw new Error(errorMessage)
-}
+import { BinCode } from "./bin.wgsl.js"
 
 
 class Main
 {
-    readonly MAX_SEGMENT_BUFFER_SIZE = 20000000
+    /* Troubleshooting */
+    debug_max_frames = -1
+    debug_show_histogram = true
+    debug_max_perf_lines = 10000
 
+
+    /* Internals */
     is_fullscreen = false
-    max_segment_buffer_nr_bytes = 0
     last_stats_time = 0
+    num_perf_lines = 0
+    num_frames = 0
     scene: Scene
     scene_timer: SceneTimer
     fps_monitor: FPSMonitor
@@ -34,8 +41,15 @@ class Main
         console.log("resized")
     }
 
+    log_perf(msg: string) {
+        if (this.num_perf_lines < this.debug_max_perf_lines) {
+            console.log(`[${(performance.now()/1000).toFixed(3)} s] ${msg}`)
+            this.num_perf_lines += 1
+        }
+    }
+
     on_keydown(e: KeyboardEvent) {
-        console.log(`You pressed ${e.key}`)
+        //console.log(`You pressed ${e.key}`)
         if (e.key == "f") {
             this.toggleFullScreen()
         }
@@ -111,12 +125,10 @@ const init_webgpu = async (main: Main) => {
     const canvas = <HTMLCanvasElement> document.getElementById("canvas-container") ?? do_throw("no canvas");
     const context = canvas.getContext("webgpu") ?? do_throw("Canvas does not support WebGPU");
 
-    // Configure the swap chain
-    const devicePixelRatio = 1; //window.devicePixelRatio || 1;
-    console.log(`devicePixelRatio is ${devicePixelRatio}`);
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
-    console.log(`canvas pixels are ${canvas.width} x ${canvas.height}`);
+    // Set internal rendering resolution
+    canvas.width = constants.SCREEN_WIDTH_PX;
+    canvas.height = constants.SCREEN_HEIGHT_PX;
+    console.log(`internal rendering resolution is ${canvas.width} x ${canvas.height}`);
     const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
     context.configure({
@@ -126,114 +138,200 @@ const init_webgpu = async (main: Main) => {
     });
 
 
-    // Compute shader
-    const computeModule = device.createShaderModule({
-        label: 'computeModule',
-        code: ComputeCode,
+    // Shaders to compile
+    const rough_module = device.createShaderModule({
+        label: 'rough_module', code: ComputeCode,
+    });
+    const fine_module = device.createShaderModule({
+        label: 'fine_module', code: RasterizeCode,
+    });
+    const bin_module = device.createShaderModule({
+        label: 'bin_module', code: BinCode,
+    });
+    const quad_fragment_module = device.createShaderModule({
+        label: 'quad_fragment_module', code: FragmentCode,
     });
 
-    const computePipeline = device.createComputePipeline({
-        layout: 'auto',
-        compute: { module: computeModule, entryPoint: 'compute_main',
-        },
+
+    // "Pipelines"
+    const rough_pipeline = device.createComputePipeline({
+        layout: 'auto', compute: { module: rough_module, entryPoint: 'rough_main', },
+    });
+    const bin_pipeline = device.createComputePipeline({
+        layout: 'auto', compute: { module: bin_module, entryPoint: 'bin_main', },
+    });
+    const fine_pipeline = device.createComputePipeline({
+        layout: 'auto', compute: { module: fine_module, entryPoint: 'fine_main', },
     });
 
-    const global_constants = new Float32Array([
-        canvas.width,
-        canvas.height,
-        0,  // unused,
-        0,  // unused
-        1, 1, 1, 1, // debug color
-        99, 99, 99, 99, // fill to min buffer size
-    ]);
 
-    const constantsBuffer = device.createBuffer({
-        size: global_constants.byteLength,
+    // Buffers
+    const uniform_buffer_gpu = device.createBuffer({
+        label: "uniform_buffer_gpu",
+        size: constants.UNIFORM_BUFFER_SIZE,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-    device.queue.writeBuffer(constantsBuffer, 0, global_constants);
 
-    const segmentDataCPU = new Float32Array(main.MAX_SEGMENT_BUFFER_SIZE)
-    const segment_data_wrapper = new BufferWrapper(segmentDataCPU)
-
-    const segmentBufferGPU = device.createBuffer({
-        size: main.MAX_SEGMENT_BUFFER_SIZE,
+    const rough_buffer_gpu = device.createBuffer({
+        label: "rough_buffer_gpu",
+        size: constants.ROUGH_BUFFER_SIZE,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
-    const colorTexture = device.createTexture({
-        size: [canvas.width, canvas.height],
-        format: "rgba8unorm",
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
+    const misc_buffer_gpu = device.createBuffer({
+        label: "misc_buffer_gpu",
+        size: constants.MISC_BUFFER_SIZE,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+    });
+
+    const misc_buffer_cpu = device.createBuffer({
+        label: "misc_buffer_cpu",
+        size: constants.MISC_BUFFER_SIZE,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+
+    const fine_buffer_gpu = device.createBuffer({
+        label: "fine_buffer_gpu",
+        size: constants.FINE_BUFFER_SIZE,
+        usage: GPUBufferUsage.STORAGE,
+    });
+
+    const output_texture_gpu = device.createBuffer({
+        label: "output_texture_gpu",
+        size: constants.TEXTURE_BUFFER_SIZE,
+        usage: GPUBufferUsage.STORAGE,
     })
 
 
-    // Render pipeline (simple quad vertex and fragment shader)
-    const shaderModule = device.createShaderModule({
-        label: 'fragmentModule',
-        code: FragmentCode,
-    });
-
+    // Texture display pipeline (simple quad vertex and fragment shader)
     const renderPipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: {
-            module: shaderModule,
+            module: quad_fragment_module,
             entryPoint: "vertex_main",
         },
         fragment: {
-            module: shaderModule,
+            module: quad_fragment_module,
             entryPoint: "fragment_main",
             targets: [ { format: presentationFormat, }, ],
         },
         primitive: { topology: "triangle-list", },
     });
 
-
-    const sampler = device.createSampler({
-        magFilter: 'linear',
-        minFilter: 'linear',
-    });
-
     const renderBG = device.createBindGroup({
+        label: "renderBG",
         layout: renderPipeline.getBindGroupLayout(0),
         entries: [
-            //{ binding: 0, resource: { buffer: constantsBuffer, }, },
-            { binding: 1, resource: colorTexture.createView() },
-            { binding: 2, resource: sampler }
+            { binding: 0, resource: { buffer: output_texture_gpu, } },
         ],
     });
 
+    const scene = main.scene
 
+    let max_frames = 60 * 5;
+
+    // --------------------------------
+    // ANIMATION FUNCTION
+    // --------------------------------
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
-            console.log(`max_segment_buffer_nr_bytes: ${main.max_segment_buffer_nr_bytes}`)
-            console.log(`frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
-            console.log(`frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`fps frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
+            console.log(`fps frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
             main.last_stats_time = raw_elapsed_secs
-            main.max_segment_buffer_nr_bytes = 0
             main.fps_monitor.clear()
         }
 
-
         // CPU Work Start -- timed
+        main.log_perf("frame start")
         const perf_cpu_start = performance.now()
         main.scene_timer.set_raw_time(raw_elapsed_secs)
         const scene_time = main.scene_timer.get_scene_time()
-        segment_data_wrapper.clear();
-        main.scene.set_aspect_ratio(canvas.clientWidth / canvas.clientHeight)
-        main.scene.draw(segment_data_wrapper, scene_time);
+        scene.draw(scene_time);
 
-        const segment_buffer_nr_bytes = segment_data_wrapper.bytes_used();
-        device.queue.writeBuffer(segmentBufferGPU, 0, segmentDataCPU, 0, segment_data_wrapper.elements_used())
-        if (segment_buffer_nr_bytes > main.max_segment_buffer_nr_bytes) {
-            main.max_segment_buffer_nr_bytes = segment_buffer_nr_bytes
-        }
+        // Upload to GPU
+        device.queue.writeBuffer(uniform_buffer_gpu, 0, scene.uniform_wrapper.bytes, 0,
+                                 scene.uniform_wrapper.bytes_used)
+        device.queue.writeBuffer(rough_buffer_gpu, 0, scene.firework_wrapper.bytes, 0,
+                                 scene.firework_wrapper.bytes_used)
         const perf_cpu_end = performance.now()
 
 
         // GPU Work Start -- timed
         const perf_gpu_start = perf_cpu_end
+        const encoder = device.createCommandEncoder();
+        encoder.clearBuffer(misc_buffer_gpu);
+        const computePass = encoder.beginComputePass()
+
+        if (scene.num_shapes() > 0) {
+            computePass.setPipeline(rough_pipeline);
+            const bg = device.createBindGroup({
+                label: "rough_bg",
+                layout: rough_pipeline.getBindGroupLayout(0),
+                entries: [
+                    { binding: 0, resource: { buffer: uniform_buffer_gpu } },
+                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
+                    { binding: 2, resource: { buffer: rough_buffer_gpu, size: scene.firework_wrapper.bytes_used } },
+                    { binding: 3, resource: { buffer: fine_buffer_gpu } },
+                    //{ binding: 4, resource: { buffer: output_texture_gpu } },
+                ],
+            });
+            computePass.setBindGroup(0, bg)
+            console.log(scene.num_shapes())
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_THREADS))
+        }
+
+        // Binning pass
+        // TODO: try an indirect launch for exact count
+        if (true) {
+            computePass.setPipeline(bin_pipeline);
+            const bg = device.createBindGroup({
+                label: "bin_bg",
+                layout: bin_pipeline.getBindGroupLayout(0),
+                entries: [
+                    //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
+                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
+                    { binding: 2, resource: { buffer: fine_buffer_gpu } },
+                ],
+            });
+            computePass.setBindGroup(0, bg)
+            computePass.dispatchWorkgroups(Math.ceil(constants.MAX_FINE_SHAPES/constants.WG_BIN_CHUNK_LEN))
+        }
+
+        if (false) {
+            computePass.setPipeline(fine_pipeline);
+            const bg = device.createBindGroup({
+                label: "fine_bg",
+                layout: fine_pipeline.getBindGroupLayout(0),
+                entries: [
+                    //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
+                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
+                    { binding: 2, resource: { buffer: fine_buffer_gpu } },
+                    { binding: 3, resource: { buffer: output_texture_gpu } },
+                ],
+            });
+            computePass.setBindGroup(0, bg)
+            const dispatch_x = Math.ceil(constants.SCREEN_WIDTH_PX / constants.WG_RASTER_PIXELS_X)
+            const dispatch_y = Math.ceil(constants.SCREEN_HEIGHT_PX / constants.WG_RASTER_PIXELS_Y)
+            computePass.dispatchWorkgroups(dispatch_x, dispatch_y);
+        }
+
+        computePass.end();
+        //encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, misc_buffer_gpu.size)
+        encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, 4096)
+
+        device.queue.submit([encoder.finish()]);
+        main.log_perf(`queue submitted`);
+
+        misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
+            main.log_perf(`got results back and mapped`);
+            const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
+            if (main.debug_show_histogram) {
+                main.log_perf(`histogram ${main.scene.get_histogram(result)}`);
+            }
+            misc_buffer_cpu.unmap()
+        }) // mapAsync callback end
+
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
@@ -245,36 +343,28 @@ const init_webgpu = async (main: Main) => {
             ],
         };
 
-        const encoder = device.createCommandEncoder();
-        const computePass = encoder.beginComputePass()
-        computePass.setPipeline(computePipeline);
-
-        const computeBG = device.createBindGroup({
-            layout: computePipeline.getBindGroupLayout(0),
-            entries: [
-                { binding: 0, resource: { buffer: constantsBuffer } },
-                { binding: 1, resource: { buffer: segmentBufferGPU, size: segment_buffer_nr_bytes } },
-                { binding: 2, resource: colorTexture.createView() }
-            ],
-        });
-
-        computePass.setBindGroup(0, computeBG);
-        computePass.dispatchWorkgroups(Math.ceil(canvas.width/4), Math.ceil(canvas.height/8), 1);
-        computePass.end();
-
-        const renderPass = encoder.beginRenderPass(renderPassDescriptor);
+        const encoder2 = device.createCommandEncoder();
+        const renderPass = encoder2.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
         renderPass.setBindGroup(0, renderBG);
         renderPass.draw(6);
         renderPass.end();
 
-        device.queue.submit([encoder.finish()]);
+        device.queue.submit([encoder2.finish()]);
+        main.log_perf(`queue submitted 2`);
+
         device.queue.onSubmittedWorkDone().then(() => {
+            main.log_perf("onSubmittedWorkDone")
             const perf_gpu_end = performance.now()
             const frame_timing = [perf_cpu_end - perf_cpu_start, perf_gpu_end - perf_gpu_start]
             main.fps_monitor.add_frame_timing(frame_timing)
-            requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
+
+            main.num_frames += 1
+            if (main.debug_max_frames === -1 || main.num_frames < main.debug_max_frames) {
+                requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));
+            }
         })
+
     }
 
     requestAnimationFrame((raw_elapsed_ms) => frame(raw_elapsed_ms, main));

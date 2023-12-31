@@ -1,125 +1,107 @@
+// webgpu-fireworks Copyright (C) 2023 Karl Pickett
+// All rights reserved
+
+import * as constants from "./constants.js";
 export var ComputeCode = `
 
-const WORKGROUP_SIZE_X = 128;
-const WORKGROUP_SIZE_Y = 64;
+${constants.WGSL_INCLUDE}
 
-struct WorkQueue {
-    index: array<LineIndex, WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y>,
-    segments: array<LineSegment>,
-}
+@group(0) @binding(0) var<uniform>              g_uniform: UniformData;
+@group(0) @binding(1) var<storage, read_write>  g_misc: MiscData;
+@group(0) @binding(2) var<storage, read>        g_rough_shapes: array<RoughShape>;
+@group(0) @binding(3) var<storage, read_write>  g_fine_shapes: array<FineShape>;
 
-struct LineIndex {
-    start_index: f32,
-    num_segments: f32,
-}
+//
+// Each workgroup fully processes a single rough shape, which uses world space
+// coordinates 0.0 ... 1.0.   0,0 is bottom left.
+//
+// Each thread generates a portion of its fine shapes, writing them to viewport
+// coordinates 0.0 ... screen_px.  (0,0) is top left.
+//
+// TODO: Could we just... render to atomic memory here?
+//
 
-struct LineSegment {
-    line_start: vec2<f32>,
-    size: f32,
-    una: f32,
-    color_start: vec4<f32>,
-};
-
-struct UniformData {
-    screen_x: f32,
-    screen_y: f32,
-    nr_segments: f32,
-    unused: f32,
-    color: vec4<f32>,
-};
-
-@group(0) @binding(0) var<uniform> g_uniform: UniformData;
-
-@group(0) @binding(1) var<storage, read> g_work_queue: WorkQueue;
-
-@group(0) @binding(2) var g_output_pixels: texture_storage_2d<rgba8unorm, write>;
-
-
-@compute @workgroup_size(4,8)
-fn compute_main(
-    @builtin(local_invocation_index) local_invocation_index: u32,
-    @builtin(global_invocation_id) global_invocation_id: vec3<u32>
+@compute @workgroup_size(WG_ROUGH_THREADS)
+fn rough_main(
+    @builtin(workgroup_id) workgroup_id : vec3<u32>,
+    @builtin(local_invocation_id) local_invocation_id : vec3<u32>,
 )
 {
-    var x = global_invocation_id.x;
-    var y = global_invocation_id.y;
-
-    var x_ratio = f32(x) / g_uniform.screen_x;
-    var y_ratio = f32(y) / g_uniform.screen_y;
-    y_ratio = 1 - y_ratio;
-
-    if (false) {
-        // Screen test pattern
-        var color = g_uniform.color;
-        color.r = step(0.494, abs(x_ratio-0.5));
-        color.g = step(0.494, abs(y_ratio-0.5));
-        color.b *= abs(x_ratio);
-        textureStore(g_output_pixels, vec2(x, y), color);
+    let rough_shape_index = workgroup_id.x * WG_ROUGH_THREADS + local_invocation_id.x;
+    if (rough_shape_index >= g_uniform.num_rough_shapes) {
         return;
     }
 
-    if (false) {
-        // Workqueue tile grid
-        var tile_x = step(0.5, fract(x_ratio * WORKGROUP_SIZE_X / 2));
-        var color = vec4<f32>(tile_x, tile_x, tile_x, 1.0);
-        textureStore(g_output_pixels, vec2(x, y), color);
+    let shape = g_rough_shapes[rough_shape_index];
+    let elapsed_secs = g_uniform.current_time - shape.start_time;
+
+    if (elapsed_secs < 0) {
+        // Not born yet -- we probably went back in time.
         return;
     }
 
-    if (true) {
-        // Rasterize segments
-        var my_block_id = u32(floor(x_ratio * WORKGROUP_SIZE_X))
-                        + u32(floor(y_ratio * WORKGROUP_SIZE_Y) * WORKGROUP_SIZE_X);
+    if (shape.duration_secs < elapsed_secs) {
+        // Shape has expired
+        return;
+    }
 
-        var start_index = u32(g_work_queue.index[my_block_id].start_index);
-        var num_segments = u32(g_work_queue.index[my_block_id].num_segments);
-        //var num_segments = 1000u;
+    // Calculate physics and update world coordinates
+    var world_position = shape.world_position;
+    world_position.x += get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
+    world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
+    world_position.y += get_total_gravity_distance(elapsed_secs);
 
-        var position = vec2<f32>(x_ratio, y_ratio);
-        var color = vec4<f32>(0., 0., 0., 0.);
+    // The size is a world size, so it scales independently to height and width
+    // A world size of 1.0 is the entire screen, tall and wide.
+    let world_size = shape.world_size;
 
-        for (var i = 0u; i < num_segments; i++) {
-            var segment = g_work_queue.segments[start_index + i];
+    // Remove segments totally out of the world space
+    if (max(world_position.x + world_size, world_position.y + world_size) < 0) {
+        return;
+    }
+    if (min(world_position.x - world_size, world_position.y - world_size) > 1.0) {
+        return;
+    }
 
-            var distance = point_sdf(position, segment.line_start, 1.0);
-            var ratio = 1.0 - smoothstep(0.0, segment.size, distance);
-            var new_color = segment.color_start;
-            new_color *= ratio;
-            new_color.r *= new_color.a;
-            new_color.g *= new_color.a;
-            new_color.b *= new_color.a;
-            color += new_color;
-        }
-        textureStore(g_output_pixels, vec2(x, y), color);
+    // Project to viewport coordinates and save to rasterize work queue
+    // ... It feels like we are so tempted to rasterize it ourself here
+    let view_x = world_position.x * SCREEN_WIDTH_PX;
+    let view_y = SCREEN_HEIGHT_PX - (world_position.y * SCREEN_HEIGHT_PX);
+    let view_size_x = world_size;
+
+    let color_ratio = 1 - smoothstep(0.0, shape.duration_secs, elapsed_secs);
+
+    // Append to fine shape array
+    // TODO: add visbility bitmask?
+    let shape_index = atomicAdd(&g_misc.num_fine_shapes, 1);
+    g_fine_shapes[shape_index].view_position.x = view_x;
+    g_fine_shapes[shape_index].view_position.y = view_y;
+    g_fine_shapes[shape_index].view_size_x = view_size_x;
+    g_fine_shapes[shape_index].packed_color = pack4x8unorm(shape.color * color_ratio);
+}
+
+
+// Simulate air drag - velocity tapers off exponentially
+// todo: add variance (in the log2) for different surface area
+fn get_total_explosion_distance(elapsed_secs: f32, velocity: f32) -> f32
+{
+    let distance = log2(10 * elapsed_secs + 1);
+    return distance * velocity * 0.1;
+}
+
+
+// Simulate gravity with terminal velocity speed
+// todo: add variance for different surface area
+fn get_total_gravity_distance(elapsed_secs: f32) -> f32
+{
+    const GRAVITY = -0.04;
+    if (elapsed_secs > 1.0) {
+        // terminal velocity: derivative(slope) of x^2 is 2x
+        return GRAVITY * (2.0 * elapsed_secs - 1.0);
+    } else {
+        return GRAVITY * (elapsed_secs * elapsed_secs);
     }
 }
 
-fn point_sdf( p: vec2<f32>, a: vec2<f32>, aspect: f32 ) -> f32
-{
-    var pa = p-a;
-    return length(pa);
-}
-
-/*
-fn line_sdf( p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, aspect: f32 ) -> f32
-{
-    var pa = p-a;
-    var ba = b-a;
-    var h: f32 = saturate( dot(pa,ba) / dot(ba,ba) );
-    var d: vec2<f32> = pa - ba * h;
-    d.x *= aspect;
-    return length(d);
-}
-
-fn is_bbox(pos: vec2<f32>, c1: vec2<f32>, c2: vec2<f32>) -> u32 {
-    var d1 = distance(pos, c1);
-    var d2 = distance(pos, c2);
-    var d3 = distance(c1, c2);
-    if ((abs(d3 - (d2 + d1))) < 0.01) {
-        return 1;
-    }
-    return 0;
-}
-*/
 
 `;
