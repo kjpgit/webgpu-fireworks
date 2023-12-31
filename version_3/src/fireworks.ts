@@ -8,7 +8,7 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 const DEBUG_LOCK_FRAME = true
 
 
-const NUM_FLARES = 4000
+const NUM_FLARES = 40
 
 const LAUNCH_TIME_RANGE = [2.3, 4.3]
 const LAUNCH_RANGE_X = [0.1, 0.9]

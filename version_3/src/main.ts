@@ -258,8 +258,9 @@ const init_webgpu = async (main: Main) => {
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
-            console.log(`fps frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
-            console.log(`fps frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`fps compute start to results: ${main.fps_monitor.get_timing_info(2)}`);
+            //console.log(`fps frame time cpu: ${main.fps_monitor.get_timing_info(0)}`);
+            //console.log(`fps frame time gpu: ${main.fps_monitor.get_timing_info(1)}`);
             main.last_stats_time = raw_elapsed_secs
             main.fps_monitor.clear()
         }
@@ -281,6 +282,7 @@ const init_webgpu = async (main: Main) => {
 
         // GPU Work Start -- timed
         const perf_gpu_start = perf_cpu_end
+        let perf_compute_results_mapped = -1
         const encoder = device.createCommandEncoder();
         encoder.clearBuffer(misc_buffer_gpu);
         const computePass = encoder.beginComputePass()
@@ -327,6 +329,7 @@ const init_webgpu = async (main: Main) => {
 
         misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
             main.log_perf(`got results back and mapped`);
+            perf_compute_end = performance.now()
             const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
             if (main.debug_show_histogram) {
                 main.log_perf(`histogram ${main.scene.get_histogram(result)}`);
@@ -358,7 +361,11 @@ const init_webgpu = async (main: Main) => {
         device.queue.onSubmittedWorkDone().then(() => {
             main.log_perf("onSubmittedWorkDone")
             const perf_gpu_end = performance.now()
-            const frame_timing = [perf_cpu_end - perf_cpu_start, perf_gpu_end - perf_gpu_start]
+            const frame_timing = [
+                perf_cpu_end - perf_cpu_start,
+                perf_compute_results_mapped - perf_gpu_start,  // time to get histogram compute results from gpu
+                perf_gpu_end - perf_gpu_start
+            ]
             main.fps_monitor.add_frame_timing(frame_timing)
 
             main.num_frames += 1
