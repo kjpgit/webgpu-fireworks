@@ -153,7 +153,7 @@ const init_webgpu = async (main: Main) => {
     });
 
 
-    // "Pipelines"
+    // Compute "Pipelines"
     const rough_pipeline = device.createComputePipeline({
         layout: 'auto', compute: { module: rough_module, entryPoint: 'rough_main', },
     });
@@ -162,6 +162,18 @@ const init_webgpu = async (main: Main) => {
     });
     const fine_pipeline = device.createComputePipeline({
         layout: 'auto', compute: { module: fine_module, entryPoint: 'fine_main', },
+    });
+
+    // Texture display pipeline (simple quad vertex and fragment shader)
+    const render_pipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: { module: quad_fragment_module, entryPoint: "vertex_main", },
+        fragment: {
+            module: quad_fragment_module,
+            entryPoint: "fragment_main",
+            targets: [ { format: presentationFormat, }, ],
+        },
+        primitive: { topology: "triangle-list", },
     });
 
 
@@ -203,22 +215,6 @@ const init_webgpu = async (main: Main) => {
     })
 
 
-    // Texture display pipeline (simple quad vertex and fragment shader)
-    const renderPipeline = device.createRenderPipeline({
-        layout: 'auto',
-        vertex: {
-            module: quad_fragment_module,
-            entryPoint: "vertex_main",
-        },
-        fragment: {
-            module: quad_fragment_module,
-            entryPoint: "fragment_main",
-            targets: [ { format: presentationFormat, }, ],
-        },
-        primitive: { topology: "triangle-list", },
-    });
-
-
     // Bind Groups
     const rough_bg = device.createBindGroup({
         label: "rough_bg",
@@ -253,9 +249,9 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
-    const renderBG = device.createBindGroup({
-        label: "renderBG",
-        layout: renderPipeline.getBindGroupLayout(0),
+    const render_bg = device.createBindGroup({
+        label: "render_bg",
+        layout: render_pipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: output_texture_gpu, } },
         ],
@@ -357,8 +353,8 @@ const init_webgpu = async (main: Main) => {
         };
         const encoder2 = device.createCommandEncoder();
         const renderPass = encoder2.beginRenderPass(renderPassDescriptor);
-        renderPass.setPipeline(renderPipeline);
-        renderPass.setBindGroup(0, renderBG);
+        renderPass.setPipeline(render_pipeline);
+        renderPass.setBindGroup(0, render_bg);
         renderPass.draw(6);
         renderPass.end();
 
