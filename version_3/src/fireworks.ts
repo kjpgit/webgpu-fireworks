@@ -118,13 +118,15 @@ export class Scene
         // Testing
         if (DEBUG_LOCK_FRAME) {
             if (this.fireworks.length == 0) {
-                let pos = new Vector2(0.11, 0.875)
-                let fw = new Firework(0, pos, NUM_FLARES)
-                this.fireworks.push(fw)
+                if (false) {
+                    let pos = new Vector2(0.11, 0.875)
+                    let fw = new Firework(0, pos, NUM_FLARES)
+                    this.fireworks.push(fw)
 
-                pos = new Vector2(0.5, 0.5)
-                fw = new Firework(0, pos, NUM_FLARES)
-                this.fireworks.push(fw)
+                    pos = new Vector2(0.5, 0.5)
+                    fw = new Firework(0, pos, NUM_FLARES)
+                    this.fireworks.push(fw)
+                }
             }
             //current_time = 1 * 1/60
             current_time /= 100
@@ -134,7 +136,6 @@ export class Scene
             this.launch_firework(current_time)
             this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
         }
-
 
         for (const fw of this.fireworks) {
             this.write_firework(fw)

@@ -252,81 +252,83 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
+    const fine_bg = device.createBindGroup({
+        label: "fine_bg",
+        layout: fine_pipeline.getBindGroupLayout(0),
+        entries: [
+            //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
+            { binding: 1, resource: { buffer: misc_buffer_gpu } },
+            { binding: 2, resource: { buffer: fine_buffer_gpu } },
+            { binding: 3, resource: { buffer: output_texture_gpu } },
+        ],
+    });
+
     // --------------------------------
     // ANIMATION FUNCTION
     // --------------------------------
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
-            console.log(`fps frame time cpu:     ${main.fps_monitor.get_timing_info(0)}`);
-            console.log(`fps frame time gpu:     ${main.fps_monitor.get_timing_info(2)}`);
-            console.log(`- fps map() histogram:  ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`[fps] cpu time:            ${main.fps_monitor.get_timing_info(0)}`);
+            console.log(`[fps] gpu time:            ${main.fps_monitor.get_timing_info(2)}`);
+            console.log(`[fps] - results mapped():  ${main.fps_monitor.get_timing_info(1)}`);
             main.last_stats_time = raw_elapsed_secs
             main.fps_monitor.clear()
         }
 
-        // CPU Work Start -- timed
+        // CPU Work Start -------------------------------------------------
         main.log_perf("frame start")
         const perf_cpu_start = performance.now()
         main.scene_timer.set_raw_time(raw_elapsed_secs)
         const scene_time = main.scene_timer.get_scene_time()
         scene.draw(scene_time);
+        main.log_perf(`cpu drawn shapes: ${scene.num_shapes()}`)
+        const perf_cpu_end = performance.now()
 
-        // Upload to GPU
+
+        // GPU Work Start -------------------------------------------------
+        // Upload data and commands to GPU
+        const perf_gpu_start = perf_cpu_end
+        const encoder = device.createCommandEncoder();
+        const computePass = encoder.beginComputePass()
+        encoder.clearBuffer(misc_buffer_gpu);
         device.queue.writeBuffer(uniform_buffer_gpu, 0, scene.uniform_wrapper.bytes, 0,
                                  scene.uniform_wrapper.bytes_used)
         device.queue.writeBuffer(rough_buffer_gpu, 0, scene.firework_wrapper.bytes, 0,
                                  scene.firework_wrapper.bytes_used)
-        const perf_cpu_end = performance.now()
 
-
-        // GPU Work Start -- timed
-        const perf_gpu_start = perf_cpu_end
-        let perf_compute_results_mapped = -1
-        const encoder = device.createCommandEncoder();
-        encoder.clearBuffer(misc_buffer_gpu);
-        const computePass = encoder.beginComputePass()
-
+        // Physics and fine shape generation pass
         if (scene.num_shapes() > 0) {
             computePass.setPipeline(rough_pipeline);
             computePass.setBindGroup(0, rough_bg)
-            console.log(scene.num_shapes())
             computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_THREADS))
         }
 
-        // Binning pass
-        // TODO: try an indirect launch for exact count
-        if (true) {
+        // Binning / histogram pass
+        if (scene.num_shapes() > 0) {
             computePass.setPipeline(bin_pipeline);
             computePass.setBindGroup(0, bin_bg)
-            computePass.dispatchWorkgroups(Math.ceil(constants.MAX_FINE_SHAPES/constants.WG_BIN_CHUNK_LEN))
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_BIN_CHUNK_LEN))
         }
 
+        // Rasterization pass
         if (false) {
             computePass.setPipeline(fine_pipeline);
-            const bg = device.createBindGroup({
-                label: "fine_bg",
-                layout: fine_pipeline.getBindGroupLayout(0),
-                entries: [
-                    //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
-                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
-                    { binding: 2, resource: { buffer: fine_buffer_gpu } },
-                    { binding: 3, resource: { buffer: output_texture_gpu } },
-                ],
-            });
-            computePass.setBindGroup(0, bg)
+            computePass.setBindGroup(0, fine_bg)
             const dispatch_x = Math.ceil(constants.SCREEN_WIDTH_PX / constants.WG_RASTER_PIXELS_X)
             const dispatch_y = Math.ceil(constants.SCREEN_HEIGHT_PX / constants.WG_RASTER_PIXELS_Y)
             computePass.dispatchWorkgroups(dispatch_x, dispatch_y);
         }
 
         computePass.end();
-        //encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, misc_buffer_gpu.size)
+
+        // We want the histogram results ASAP
         encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, 4096)
 
         device.queue.submit([encoder.finish()]);
         main.log_perf(`queue submitted`);
 
+        let perf_compute_results_mapped = -1
         misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
             main.log_perf(`got results back and mapped`);
             perf_compute_results_mapped = performance.now()
@@ -337,6 +339,8 @@ const init_webgpu = async (main: Main) => {
             misc_buffer_cpu.unmap()
         }) // mapAsync callback end
 
+
+        // GPU Work Start 2 -- Draw fullscreen quad to screen ------------
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
@@ -347,7 +351,6 @@ const init_webgpu = async (main: Main) => {
                 },
             ],
         };
-
         const encoder2 = device.createCommandEncoder();
         const renderPass = encoder2.beginRenderPass(renderPassDescriptor);
         renderPass.setPipeline(renderPipeline);
@@ -364,7 +367,7 @@ const init_webgpu = async (main: Main) => {
             const frame_timing = [
                 perf_cpu_end - perf_cpu_start,
                 perf_compute_results_mapped - perf_gpu_start,  // time to get histogram compute results from gpu
-                perf_gpu_end - perf_gpu_start
+                perf_gpu_end - perf_gpu_start                  // total gpu time, including screen render
             ]
             main.fps_monitor.add_frame_timing(frame_timing)
 
