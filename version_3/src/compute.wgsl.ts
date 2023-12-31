@@ -21,13 +21,13 @@ ${constants.WGSL_INCLUDE}
 // TODO: Could we just... render to atomic memory here?
 //
 
-@compute @workgroup_size(WG_ROUGH_THREADS)
+@compute @workgroup_size(WG_ROUGH_WORKLOAD)
 fn rough_main(
     @builtin(workgroup_id) workgroup_id : vec3<u32>,
     @builtin(local_invocation_id) local_invocation_id : vec3<u32>,
 )
 {
-    let rough_shape_index = workgroup_id.x * WG_ROUGH_THREADS + local_invocation_id.x;
+    let rough_shape_index = workgroup_id.x * WG_ROUGH_WORKLOAD + local_invocation_id.x;
     if (rough_shape_index >= g_uniform.num_rough_shapes) {
         return;
     }
