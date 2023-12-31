@@ -301,14 +301,14 @@ const init_webgpu = async (main: Main) => {
         if (scene.num_shapes() > 0) {
             computePass.setPipeline(rough_pipeline);
             computePass.setBindGroup(0, rough_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_THREADS))
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_WORKLOAD))
         }
 
         // Binning / histogram pass
         if (scene.num_shapes() > 0) {
             computePass.setPipeline(bin_pipeline);
             computePass.setBindGroup(0, bin_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_BIN_CHUNK_LEN))
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_BIN_WORKLOAD))
         }
 
         // Rasterization pass

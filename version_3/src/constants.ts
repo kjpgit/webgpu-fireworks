@@ -22,8 +22,8 @@ export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 16   // == 16,000,000
 export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // == 32MB!
 export const MISC_BUFFER_SIZE     = 64000
 
-export const WG_ROUGH_THREADS     = 128
-export const WG_BIN_CHUNK_LEN     = 4000
+export const WG_ROUGH_WORKLOAD    = 128   // Rough shapes processed per WG
+export const WG_BIN_WORKLOAD      = 4000  // Fine shapes processed per WG
 
 export const WGSL_INCLUDE = `
 
@@ -33,8 +33,8 @@ const SCREEN_WIDTH_PX = ${SCREEN_WIDTH_PX};
 const SCREEN_HEIGHT_PX = ${SCREEN_HEIGHT_PX};
 const WG_RASTER_PIXELS_X = ${WG_RASTER_PIXELS_X};
 const WG_RASTER_PIXELS_Y = ${WG_RASTER_PIXELS_Y};
-const WG_ROUGH_THREADS   = ${WG_ROUGH_THREADS};
-const WG_BIN_CHUNK_LEN   = ${WG_BIN_CHUNK_LEN};
+const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
+const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
 ////////////////////////////////////////////////////////////
 
 
@@ -57,10 +57,6 @@ struct MiscData {
 struct MiscDataRead {
     num_fine_shapes: u32,
     @align(128) histogram: array<u32, 64>,
-
-    //dispatch_indirect_rasterize_x: atomic<u32>,
-    //dispatch_indirect_rasterize_y: atomic<u32>,
-    //dispatch_indirect_rasterize_z: atomic<u32>,
 };
 
 // A basic particle.
