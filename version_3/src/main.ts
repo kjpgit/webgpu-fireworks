@@ -230,6 +230,28 @@ const init_webgpu = async (main: Main) => {
 
     let max_frames = 60 * 5;
 
+    const rough_bg = device.createBindGroup({
+        label: "rough_bg",
+        layout: rough_pipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: uniform_buffer_gpu } },
+            { binding: 1, resource: { buffer: misc_buffer_gpu } },
+            { binding: 2, resource: { buffer: rough_buffer_gpu  } },
+            { binding: 3, resource: { buffer: fine_buffer_gpu } },
+            //{ binding: 4, resource: { buffer: output_texture_gpu } },
+        ],
+    });
+
+    const bin_bg = device.createBindGroup({
+        label: "bin_bg",
+        layout: bin_pipeline.getBindGroupLayout(0),
+        entries: [
+            //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
+            { binding: 1, resource: { buffer: misc_buffer_gpu } },
+            { binding: 2, resource: { buffer: fine_buffer_gpu } },
+        ],
+    });
+
     // --------------------------------
     // ANIMATION FUNCTION
     // --------------------------------
@@ -265,18 +287,7 @@ const init_webgpu = async (main: Main) => {
 
         if (scene.num_shapes() > 0) {
             computePass.setPipeline(rough_pipeline);
-            const bg = device.createBindGroup({
-                label: "rough_bg",
-                layout: rough_pipeline.getBindGroupLayout(0),
-                entries: [
-                    { binding: 0, resource: { buffer: uniform_buffer_gpu } },
-                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
-                    { binding: 2, resource: { buffer: rough_buffer_gpu, size: scene.firework_wrapper.bytes_used } },
-                    { binding: 3, resource: { buffer: fine_buffer_gpu } },
-                    //{ binding: 4, resource: { buffer: output_texture_gpu } },
-                ],
-            });
-            computePass.setBindGroup(0, bg)
+            computePass.setBindGroup(0, rough_bg)
             console.log(scene.num_shapes())
             computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_THREADS))
         }
@@ -285,16 +296,7 @@ const init_webgpu = async (main: Main) => {
         // TODO: try an indirect launch for exact count
         if (true) {
             computePass.setPipeline(bin_pipeline);
-            const bg = device.createBindGroup({
-                label: "bin_bg",
-                layout: bin_pipeline.getBindGroupLayout(0),
-                entries: [
-                    //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
-                    { binding: 1, resource: { buffer: misc_buffer_gpu } },
-                    { binding: 2, resource: { buffer: fine_buffer_gpu } },
-                ],
-            });
-            computePass.setBindGroup(0, bg)
+            computePass.setBindGroup(0, bin_bg)
             computePass.dispatchWorkgroups(Math.ceil(constants.MAX_FINE_SHAPES/constants.WG_BIN_CHUNK_LEN))
         }
 
