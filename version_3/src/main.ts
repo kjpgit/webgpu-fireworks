@@ -226,10 +226,6 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
-    const scene = main.scene
-
-    let max_frames = 60 * 5;
-
     const rough_bg = device.createBindGroup({
         label: "rough_bg",
         layout: rough_pipeline.getBindGroupLayout(0),
@@ -263,12 +259,16 @@ const init_webgpu = async (main: Main) => {
         ],
     });
 
+    const scene = main.scene
+
+
     // --------------------------------
     // ANIMATION FUNCTION
     // --------------------------------
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
+            console.log(`[fps] frames:                 ${main.fps_monitor.frame_data.length}`)
             console.log(`[fps] cpu time:               ${main.fps_monitor.get_timing_info(0)}`);
             console.log(`[fps] get histogram results:  ${main.fps_monitor.get_timing_info(1)}`);
             console.log(`[fps] total gpu time:         ${main.fps_monitor.get_timing_info(2)}`);

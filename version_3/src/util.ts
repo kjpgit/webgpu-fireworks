@@ -166,7 +166,7 @@ export class SceneTimer {
 
 
 export class FPSMonitor {
-    private frame_data: number[][] = []
+    frame_data: number[][] = []
 
     add_frame_timing(frame_data: number[]) {
         this.frame_data.push(frame_data)
