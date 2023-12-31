@@ -269,9 +269,10 @@ const init_webgpu = async (main: Main) => {
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
         if (raw_elapsed_secs - main.last_stats_time > 1) {
-            console.log(`[fps] cpu time:            ${main.fps_monitor.get_timing_info(0)}`);
-            console.log(`[fps] gpu time:            ${main.fps_monitor.get_timing_info(2)}`);
-            console.log(`[fps] - results mapped():  ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`[fps] cpu time:               ${main.fps_monitor.get_timing_info(0)}`);
+            console.log(`[fps] get histogram results:  ${main.fps_monitor.get_timing_info(1)}`);
+            console.log(`[fps] total gpu time:         ${main.fps_monitor.get_timing_info(2)}`);
+            console.log(`[fps] --------------------------------------------------------------------`)
             main.last_stats_time = raw_elapsed_secs
             main.fps_monitor.clear()
         }
@@ -289,13 +290,14 @@ const init_webgpu = async (main: Main) => {
         // GPU Work Start -------------------------------------------------
         // Upload data and commands to GPU
         const perf_gpu_start = perf_cpu_end
-        const encoder = device.createCommandEncoder();
-        const computePass = encoder.beginComputePass()
-        encoder.clearBuffer(misc_buffer_gpu);
         device.queue.writeBuffer(uniform_buffer_gpu, 0, scene.uniform_wrapper.bytes, 0,
                                  scene.uniform_wrapper.bytes_used)
         device.queue.writeBuffer(rough_buffer_gpu, 0, scene.firework_wrapper.bytes, 0,
                                  scene.firework_wrapper.bytes_used)
+        const encoder = device.createCommandEncoder();
+        encoder.clearBuffer(misc_buffer_gpu);
+
+        const computePass = encoder.beginComputePass()
 
         // Physics and fine shape generation pass
         if (scene.num_shapes() > 0) {
@@ -322,7 +324,7 @@ const init_webgpu = async (main: Main) => {
 
         computePass.end();
 
-        // We want the histogram results ASAP
+        // Copy the histogram results to CPU, ASAP!
         encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, 4096)
 
         device.queue.submit([encoder.finish()]);
