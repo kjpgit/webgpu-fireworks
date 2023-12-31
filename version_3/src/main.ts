@@ -208,6 +208,12 @@ const init_webgpu = async (main: Main) => {
         usage: GPUBufferUsage.STORAGE,
     });
 
+    const fine_idx_buffer_gpu = device.createBuffer({
+        label: "fine_idx_buffer_gpu",
+        size: constants.POINTER_BUFFER_SIZE,
+        usage: GPUBufferUsage.STORAGE,
+    });
+
     const output_texture_gpu = device.createBuffer({
         label: "output_texture_gpu",
         size: constants.TEXTURE_BUFFER_SIZE,
@@ -235,6 +241,7 @@ const init_webgpu = async (main: Main) => {
             //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
+            { binding: 3, resource: { buffer: fine_idx_buffer_gpu } },
         ],
     });
 
@@ -312,7 +319,7 @@ const init_webgpu = async (main: Main) => {
         }
 
         // Rasterization pass
-        if (false) {
+        if (true) {
             computePass.setPipeline(fine_pipeline);
             computePass.setBindGroup(0, fine_bg)
             const dispatch_x = Math.ceil(constants.SCREEN_WIDTH_PX / constants.WG_RASTER_PIXELS_X)

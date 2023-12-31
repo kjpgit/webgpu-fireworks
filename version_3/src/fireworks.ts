@@ -118,7 +118,7 @@ export class Scene
         // Testing
         if (DEBUG_LOCK_FRAME) {
             if (this.fireworks.length == 0) {
-                if (false) {
+                if (true) {
                     let pos = new Vector2(0.11, 0.875)
                     let fw = new Firework(0, pos, NUM_FLARES)
                     this.fireworks.push(fw)
