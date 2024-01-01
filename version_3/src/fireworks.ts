@@ -9,8 +9,9 @@ const PERFTEST_FRAME = 1
 
 
 const NUM_FLARES = 40000
+const MAX_FIREWORKS = 2
 
-const LAUNCH_TIME_RANGE = [1.0, 2.0]
+const LAUNCH_TIME_RANGE = [2.2, 3.0]
 const LAUNCH_RANGE_X = [0.2, 0.8]
 const LAUNCH_RANGE_Y = [0.5, 0.8]
 
@@ -123,7 +124,8 @@ export class Scene
                     let fw: Firework
 
                     pos = new Vector2(0.10, 0.9)
-                    fw = new Firework(0, pos, NUM_FLARES)
+                    //fw = new Firework(0, pos, NUM_FLARES)
+                    fw = new Firework(48/60, pos, NUM_FLARES)
                     this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
@@ -132,7 +134,7 @@ export class Scene
                 }
             }
             current_time = 1 * 1/60
-            //current_time = 1 * 30/60
+            current_time = 1 * 50/60
             //current_time = 1 * 50/60
             //current_time /= 10000
         } else {
@@ -157,7 +159,7 @@ export class Scene
 
         let fw = new Firework(current_time, pos, NUM_FLARES)
         this.fireworks.push(fw)
-        while (this.fireworks.length > 5) {
+        while (this.fireworks.length > MAX_FIREWORKS) {
             this.fireworks.shift()
         }
     }

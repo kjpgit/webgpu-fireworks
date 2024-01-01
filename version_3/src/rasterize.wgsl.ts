@@ -16,6 +16,7 @@ ${constants.WGSL_INCLUDE}
 
 
 // Testing with 40k x2 locked frame (GPU avg ms)
+// Frame 1/60   Num blends = 137k
 // -------------------------------------------------
 // noop         = 14 - 16  (although cpu and gpu load is high)
 // heatmap      = 160
@@ -23,9 +24,14 @@ ${constants.WGSL_INCLUDE}
 // monochrome with full shape scan = 1400-1700
 // normal       = 300
 
+// Frame 50/60  Num blends = 112k
+// -------------------------------------------------
+// normal       = 280ms
+
+
 const PERFORMANCE_TEST_NOOOP      = false;
 const PERFORMANCE_TEST_HEATMAP    = false;
-const PERFORMANCE_TEST_MONOCHROME = true;
+const PERFORMANCE_TEST_MONOCHROME = false;
 
 
 //
