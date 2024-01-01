@@ -124,8 +124,8 @@ export class Scene
                     let fw: Firework
 
                     pos = new Vector2(0.10, 0.9)
-                    //fw = new Firework(0, pos, NUM_FLARES)
-                    fw = new Firework(48/60, pos, NUM_FLARES)
+                    fw = new Firework(0, pos, NUM_FLARES)
+                    //fw = new Firework(48/60, pos, NUM_FLARES)
                     this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
@@ -134,7 +134,7 @@ export class Scene
                 }
             }
             current_time = 1 * 1/60
-            current_time = 1 * 50/60
+            //current_time = 1 * 50/60
             //current_time = 1 * 50/60
             //current_time /= 10000
         } else {

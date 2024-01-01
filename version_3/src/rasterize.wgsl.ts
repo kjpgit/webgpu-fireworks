@@ -20,17 +20,23 @@ ${constants.WGSL_INCLUDE}
 // -------------------------------------------------
 // noop         = 14 - 16  (although cpu and gpu load is high)
 // heatmap      = 160
+// heatmap2     = 260   // wow, most of the work is just basic math
 // monochrome   = 300
 // monochrome with full shape scan = 1400-1700
 // normal       = 300
+// normal nobbox = 300 (no difference with 1/60 frame)
+// normal_integrated_bbox = 300
+// smoothstep normal = 330
 
 // Frame 50/60  Num blends = 112k
 // -------------------------------------------------
-// normal       = 280ms
+// normal       = 265-280ms
+// normal nobbox = 270-280
 
 
 const PERFORMANCE_TEST_NOOOP      = false;
 const PERFORMANCE_TEST_HEATMAP    = false;
+const PERFORMANCE_TEST_HEATMAP2   = false;
 const PERFORMANCE_TEST_MONOCHROME = false;
 
 
@@ -121,15 +127,21 @@ fn fine_main(
                 final_color.r += 0.01;
             } else {
                 // Real work
-                if (circle_bbox_check(shape_vpos, view_center) <= shape_size) {
-                    let pdistance = point_sdf(view_center, shape_vpos);
-                    //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
-                    let ratio = 1.0 - step(shape_size, pdistance);
-                    if (ratio > 0.0) {
-                        if (PERFORMANCE_TEST_MONOCHROME) {
-                            final_color.b = 1.0;
-                        } else {
-                            final_color += get_shape_color(shape).rgb * ratio;
+                let rough_dist = abs(shape_vpos - view_center);
+                let rough_check = min(rough_dist.x, rough_dist.y);
+                if (rough_check <= shape_size) {
+                    if (PERFORMANCE_TEST_HEATMAP2) {
+                        final_color.r += 0.001;
+                    } else {
+                        let pdistance = length(rough_dist);
+                        //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
+                        let ratio = 1.0 - step(shape_size, pdistance);
+                        if (ratio > 0.0) {
+                            if (PERFORMANCE_TEST_MONOCHROME) {
+                                final_color.b = 1.0;
+                            } else {
+                                final_color += get_shape_color(shape).rgb * ratio;
+                            }
                         }
                     }
                 }
