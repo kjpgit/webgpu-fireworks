@@ -94,6 +94,7 @@ fn fine_main(
             let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
             if (ratio > 0.0) {
                 final_color += get_shape_color(shape) * ratio;
+                //final_color += 0.01 * ratio;
             }
         }
     }

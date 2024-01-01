@@ -14,7 +14,7 @@ class Main
 {
     /* Troubleshooting */
     debug_max_frames = -1
-    debug_show_histogram = true
+    debug_show_histogram = false
     debug_max_perf_lines = 10000
 
 

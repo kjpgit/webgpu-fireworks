@@ -5,10 +5,10 @@ import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const DEBUG_LOCK_FRAME = true
+const PERFTEST_FRAME = true
 
 
-const NUM_FLARES = 400
+const NUM_FLARES = 4000
 
 const LAUNCH_TIME_RANGE = [2.3, 4.3]
 const LAUNCH_RANGE_X = [0.1, 0.9]
@@ -115,27 +115,29 @@ export class Scene
         this.uniform_wrapper.clear();
         this.firework_wrapper.clear();
 
-        // Testing
-        if (DEBUG_LOCK_FRAME) {
+        // Rough perf testing, not an exact science
+        if (PERFTEST_FRAME) {
             if (this.fireworks.length == 0) {
                 if (true) {
-                    let pos = new Vector2(0.11, 0.875)
+                    let pos = new Vector2(0.10, 0.9)
                     let fw = new Firework(0, pos, NUM_FLARES)
                     this.fireworks.push(fw)
 
-                    //pos = new Vector2(0.5, 0.5)
-                    //fw = new Firework(0, pos, NUM_FLARES)
-                    //this.fireworks.push(fw)
+                    pos = new Vector2(0.5, 0.5)
+                    fw = new Firework(0, pos, NUM_FLARES)
+                    this.fireworks.push(fw)
                 }
             }
             //current_time = 1 * 1/60
-            //current_time /= 100
+            current_time /= 10000
+        } else {
+            // Normal auto launch
+            if (current_time > this.next_launch && this.fireworks.length >= 0) {
+                this.launch_firework(current_time)
+                this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
+            }
         }
 
-        if (!DEBUG_LOCK_FRAME && current_time > this.next_launch && this.fireworks.length >= 0) {
-            this.launch_firework(current_time)
-            this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
-        }
 
         for (const fw of this.fireworks) {
             this.write_firework(fw)
