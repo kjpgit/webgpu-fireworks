@@ -158,24 +158,14 @@ fn fine_main(
 }
 
 
-fn point_sdf(p: vec2<f32>, a: vec2<f32>) -> f32
-{
-    let pa = p-a;
-    //return dot(pa,pa);  // can be related but not exact
-    return length(pa);
-}
-
-fn output_texture_add(view_x: f32, view_y: f32, color: vec3<f32>)
-{
-    let fb_linear = get_texture_linear_index(view_x, view_y);
-    g_color_buffer[fb_linear] += color;
-}
-
 fn output_texture_store(view_x: f32, view_y: f32, color: vec3<f32>)
 {
     let fb_linear = get_texture_linear_index(view_x, view_y);
     g_color_buffer[fb_linear] = color;
 }
+
+
+
 
 
 // Workgroup fast memory
@@ -194,6 +184,7 @@ fn output_texture_get_private(view_x: f32, view_y: f32) -> vec3<f32>
 }
 */
 
+/*
 // From stackoverflow
 fn is_in_box(v: vec2<f32>, bottomLeft: vec2<f32>, topRight: vec2<f32>) -> f32
 {
@@ -205,12 +196,20 @@ fn is_in_box(v: vec2<f32>, bottomLeft: vec2<f32>, topRight: vec2<f32>) -> f32
     return s.x * s.y;
 }
 
-
 // Return conservative distance estimate
 fn circle_bbox_check(c1: vec2<f32>, c2: vec2<f32>) -> f32
 {
     return min(abs(c1.x-c2.x), abs(c1.y-c2.y));
 }
+
+fn point_sdf(p: vec2<f32>, a: vec2<f32>) -> f32
+{
+    let pa = p-a;
+    //return dot(pa,pa);  // can be related but not exact
+    return length(pa);
+}
+
+*/
 
 
 `;
