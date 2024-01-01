@@ -325,7 +325,7 @@ const init_webgpu = async (main: Main) => {
             computePass.setBindGroup(0, fine_bg)
             const dispatch_x = Math.ceil(constants.SCREEN_WIDTH_PX / constants.WG_RASTER_PIXELS_X)
             const dispatch_y = Math.ceil(constants.SCREEN_HEIGHT_PX / constants.WG_RASTER_PIXELS_Y)
-            computePass.dispatchWorkgroups(dispatch_x, dispatch_y);
+            computePass.dispatchWorkgroups(dispatch_x, dispatch_y, 14*5);
         }
 
         computePass.end();

@@ -36,6 +36,8 @@ fn fine_main(
     // We process one logical tile out of the 8x8 grid
     let tile_x = workgroup_id.x;
     let tile_y = workgroup_id.y;
+    let offset_x = (workgroup_id.z % 14) * 16;
+    let offset_y = (workgroup_id.z / 14) * 16;
 
     /*
         // only do this if thread0,0
@@ -48,12 +50,11 @@ fn fine_main(
     }
     */
 
-    let shape_mask = (1u << (24 + tile_x));
 
     // The view box this *workgroup* is responsible for.
     let wg_view_min = vec2<f32>(
-        f32(workgroup_id.x * WG_RASTER_PIXELS_X),
-        f32(workgroup_id.y * WG_RASTER_PIXELS_Y),
+        f32(workgroup_id.x * WG_RASTER_PIXELS_X + offset_x),
+        f32(workgroup_id.y * WG_RASTER_PIXELS_Y + offset_y),
     );
 
     // The view box this *thread* is responsible for.
@@ -76,6 +77,7 @@ fn fine_main(
     var final_color = clear_color;
 
     let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
+    let shape_mask = (1u << (24 + tile_x));
 
     for (var s = 0u; s < total_shapes; s++) {
         let shape_idx = g_fine_shapes_index[tile_y][s];
