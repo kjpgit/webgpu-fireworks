@@ -11,8 +11,11 @@ ${constants.WGSL_INCLUDE}
 //@group(0) @binding(1) var<storage, read_write>    g_misc: MiscData;
 @group(0) @binding(1) var<storage, read>        g_misc: MiscDataRead;
 @group(0) @binding(2) var<storage, read>        g_fine_shapes: array<FineShape>;
-@group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec3<f32>>;
 @group(0) @binding(4) var<storage, read>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
+
+const PERFORMANCE_TEST_HEATMAP = true;
+const PERFORMANCE_TEST_NOOOP = false;
 
 
 //
@@ -26,8 +29,8 @@ ${constants.WGSL_INCLUDE}
 const WG_THREADS_X = 16;
 const WG_THREADS_Y = 16;
 
-//var<workgroup> private_color_storage: array<vec4<f32>, WG_RASTER_PIXELS_X*WG_RASTER_PIXELS_Y>;
-var<workgroup> shape: FineShape;
+//var<workgroup> private_color_storage: array<vec3<f32>, WG_RASTER_PIXELS_X*WG_RASTER_PIXELS_Y>;
+//var<workgroup> shape: FineShape;
 
 @compute @workgroup_size(WG_THREADS_X, WG_THREADS_Y)
 fn fine_main(
@@ -75,41 +78,47 @@ fn fine_main(
     //}
 
     let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
-    let clear_color = vec4<f32>(0.0, 0.2, 0.0, 1.0);
+    let clear_color = vec3<f32>(0.0, 0.2, 0.0);
     var final_color = clear_color;
 
+    if (!PERFORMANCE_TEST_NOOOP) {
+        // bitmap index scan
+        //let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
+        let total_shapes = g_misc.num_fine_shapes_per_row[tile_y];
 
-    // bitmap index scan
-    //let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
-    let total_shapes = g_misc.num_fine_shapes_per_row[tile_y];
+        let shape_mask = (1u << (24 + tile_x));
+        for (var s = 0u; s < total_shapes; s++) {
+            let shape_idx = g_fine_shapes_index[tile_y][s];
+            if ((shape_idx & shape_mask) == 0) {
+                continue;
+            }
+            let shape = g_fine_shapes[shape_idx & 0xffffff];
+            //shape = g_fine_shapes[shape_idx & 0xffffff];
+            //workgroupBarrier();  // Great way to prove we have uniform control flow!
 
-    let shape_mask = (1u << (24 + tile_x));
-    for (var s = 0u; s < total_shapes; s++) {
-        let shape_idx = g_fine_shapes_index[tile_y][s];
-        if ((shape_idx & shape_mask) == 0) {
-            continue;
-        }
-        //let shape = g_fine_shapes[shape_idx & 0xffffff];
+        /*
+        // dumb full array scan
+        let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
+        for (var s = 0u; s < total_shapes; s++) {
+            let shape = g_fine_shapes[s];
+        */
 
-        shape = g_fine_shapes[shape_idx & 0xffffff];
-        //workgroupBarrier();  // Great way to prove we have uniform control flow!
+            let shape_size = shape.view_size_x;
+            let shape_vpos = shape.view_position;
 
-    /*
-    // dumb full array scan
-    let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
-    for (var s = 0u; s < total_shapes; s++) {
-        let shape = g_fine_shapes[s];
-    */
-
-        let shape_size = shape.view_size_x;
-        let shape_vpos = shape.view_position;
-
-        if (circle_bbox_check(shape_vpos, view_center) <= shape_size) {
-            let pdistance = point_sdf(view_center, shape_vpos);
-            let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
-            if (ratio > 0.0) {
-                final_color += get_shape_color(shape) * ratio;
-                //final_color += 0.01 * ratio;
+            if (PERFORMANCE_TEST_HEATMAP) {
+                final_color.r += 0.01;
+            } else {
+                // Real work
+                if (circle_bbox_check(shape_vpos, view_center) <= shape_size) {
+                    let pdistance = point_sdf(view_center, shape_vpos);
+                    //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
+                    let ratio = 1.0 - step(shape_size, pdistance);
+                    if (ratio > 0.0) {
+                        final_color += get_shape_color(shape).rgb * ratio;
+                        //final_color += 0.01 * ratio;
+                    }
+                }
             }
         }
     }
@@ -126,13 +135,13 @@ fn point_sdf(p: vec2<f32>, a: vec2<f32>) -> f32
     return length(pa);
 }
 
-fn output_texture_add(view_x: f32, view_y: f32, color: vec4<f32>)
+fn output_texture_add(view_x: f32, view_y: f32, color: vec3<f32>)
 {
     let fb_linear = get_texture_linear_index(view_x, view_y);
     g_color_buffer[fb_linear] += color;
 }
 
-fn output_texture_store(view_x: f32, view_y: f32, color: vec4<f32>)
+fn output_texture_store(view_x: f32, view_y: f32, color: vec3<f32>)
 {
     let fb_linear = get_texture_linear_index(view_x, view_y);
     g_color_buffer[fb_linear] = color;
@@ -142,13 +151,13 @@ fn output_texture_store(view_x: f32, view_y: f32, color: vec4<f32>)
 // Workgroup fast memory
 //
 /*
-fn output_texture_add_private(view_x: f32, view_y: f32, color: vec4<f32>)
+fn output_texture_add_private(view_x: f32, view_y: f32, color: vec3<f32>)
 {
     let private_linear = u32(floor(view_x) + floor(view_y) * WG_RASTER_PIXELS_X);
     private_color_storage[private_linear] += color;
 }
 
-fn output_texture_get_private(view_x: f32, view_y: f32) -> vec4<f32>
+fn output_texture_get_private(view_x: f32, view_y: f32) -> vec3<f32>
 {
     let private_linear = u32(floor(view_x) + floor(view_y) * WG_RASTER_PIXELS_X);
     return private_color_storage[private_linear];

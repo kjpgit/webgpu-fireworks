@@ -5,14 +5,14 @@ import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const PERFTEST_FRAME = true
+const PERFTEST_FRAME = 0
 
 
 const NUM_FLARES = 4000
 
-const LAUNCH_TIME_RANGE = [2.0, 3.0]
-const LAUNCH_RANGE_X = [0.5, 0.5]
-const LAUNCH_RANGE_Y = [0.5, 0.5]
+const LAUNCH_TIME_RANGE = [1.0, 2.0]
+const LAUNCH_RANGE_X = [0.2, 0.8]
+const LAUNCH_RANGE_Y = [0.5, 0.8]
 
 const FLARE_DURATION_RANGE = [1.0, 4.0]
 const FLARE_SIZE_RANGE = [0.001, 0.009]
