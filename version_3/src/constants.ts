@@ -1,33 +1,31 @@
 // webgpu-fireworks Copyright (C) 2023 Karl Pickett
 // All rights reserved
 
-// These settings are designed to render ~1 million small shapes, regardless of
-// if they are distributed evenly across the screen, or if they are all stacked
-// on each other.
+// These settings are designed to render 10K small shapes, regardless of if
+// they are distributed evenly across the screen, or if they are all stacked on
+// each other.
+
+export const SCREEN_WIDTH_PX      = 1792   // 1146880 total pixels
+export const SCREEN_HEIGHT_PX     = 640
+
+export const TILE_SIZE_X          = 16     // pixels
+export const TILE_SIZE_Y          = 16
+export const TILE_SIZE_TOTAL      = 256
+export const NUM_TILES_X          = 112
+export const NUM_TILES_Y          = 40
+export const NUM_TILES_TOTAL      = 4480
 
 export const MAX_ROUGH_SHAPES     = 10000
 export const MAX_FINE_SHAPES      = 10000   // 160KB to hold every fine shape
 
-export const TILES_X      = 8
-export const TILES_Y      = 8
-
-//export const SCREEN_WIDTH_PX = 1920
-//export const SCREEN_HEIGHT_PX = 1080
-export const SCREEN_WIDTH_PX =  1792
-export const SCREEN_HEIGHT_PX = 640
-export const WG_RASTER_PIXELS_X  = SCREEN_WIDTH_PX/TILES_X   // 224
-export const WG_RASTER_PIXELS_Y  = SCREEN_HEIGHT_PX/TILES_Y  // 80
-
 export const UNIFORM_BUFFER_SIZE  = 8000
-export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 48  // == 4,800,000
-export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 16   // == 16,000,000
-export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // == 24MB?
-export const MISC_BUFFER_SIZE     = 64000
+export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864)
+export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 48  // 480KB
+export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 32   // 320KB
+export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // 18MB
 
-export const POINTER_BUFFER_SIZE  = TILES_Y * MAX_FINE_SHAPES * 4   // == 32MB!
-
-export const WG_ROUGH_WORKLOAD    = 128   // Rough shapes processed per WG
-export const WG_BIN_WORKLOAD      = 4000  // Fine shapes processed per WG
+export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
+export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
 
 export const WGSL_INCLUDE = `
 
@@ -35,10 +33,10 @@ export const WGSL_INCLUDE = `
 // IMPORTANT: These settings must match the javascript code!
 const SCREEN_WIDTH_PX     = ${SCREEN_WIDTH_PX};
 const SCREEN_HEIGHT_PX    = ${SCREEN_HEIGHT_PX};
-const WG_RASTER_PIXELS_X  = ${WG_RASTER_PIXELS_X};
-const WG_RASTER_PIXELS_Y  = ${WG_RASTER_PIXELS_Y};
-const TILES_X             = ${TILES_X};
-const TILES_Y             = ${TILES_Y};
+const TILE_SIZE_X         = ${TILE_SIZE_X};
+const TILE_SIZE_Y         = ${TILE_SIZE_Y};
+const NUM_TILES_X         = ${NUM_TILES_X};
+const NUM_TILES_Y         = ${NUM_TILES_Y};
 const MAX_FINE_SHAPES     = ${MAX_FINE_SHAPES};
 const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
 const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
@@ -48,25 +46,26 @@ const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
 struct UniformData {
     current_time: f32,
     debug_flags: u32,
-    num_rough_shapes: u32,
+    num_rough_shapes: i32,
     // todo: noise data
 };
 
 struct MiscData {
-    num_fine_shapes: atomic<u32>,
-    @align(32) num_fine_shapes_per_row:  array<atomic<u32>, TILES_Y>,
+    // This is calculated during rough shape processing, when appending to fine buffer
+    num_fine_shapes: atomic<i32>,
 
-    @align(128) histogram: array<array<atomic<i32>, TILES_X>, TILES_Y>,
+    // This is calculated during binning step 1, and can be read by the GUI
+    @align(4096) num_shapes_per_tile: array<array<atomic<i32>, NUM_TILES_X>, NUM_TILES_Y>,
 
-    //dispatch_indirect_rasterize_x: atomic<u32>,
-    //dispatch_indirect_rasterize_y: atomic<u32>,
-    //dispatch_indirect_rasterize_z: atomic<u32>,
+    // This populated during binning step 2
+    // It is read by the fine rasterizer
+    @align(4096) tile_shape_index: array<array<FineIndex>, NUM_TILES_X>, NUM_TILES_Y>,
 };
 
-struct MiscDataRead {
-    num_fine_shapes: u32,
-    @align(32) num_fine_shapes_per_row:  array<u32, TILES_Y>,
-}
+struct FineIndex {
+    i32 offset,
+    i32 length,
+};
 
 
 // A basic particle.
@@ -79,22 +78,19 @@ struct RoughShape {
     duration_secs: f32,
     flags:         u32,
 
-    color:         vec4<f32>,  // we could pack this if we wanted.
+    color:         vec4<f32>,
 };
 
 
-// This is our largest single buffer, so keep the size down.
 struct FineShape {
     view_position: vec2<f32>,
     view_size_x: f32,
-    packed_color: u32,
+    color: vec3<f32>,
 };
 
-fn get_shape_color(shape: FineShape) -> vec4<f32> { return unpack4x8unorm(shape.packed_color); }
-
-fn get_texture_linear_index(view_x: f32, view_y: f32) -> u32
+fn get_texture_linear_index(view_x: f32, view_y: f32) -> i32
 {
-    return u32(floor(view_x) + floor(view_y) * SCREEN_WIDTH_PX);
+    return i32(floor(view_x) + floor(view_y) * SCREEN_WIDTH_PX);
 }
 
 `;
