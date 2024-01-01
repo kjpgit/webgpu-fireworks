@@ -28,6 +28,7 @@ const PERFORMANCE_TEST_NOOOP = false;
 //
 const WG_THREADS_X = 16;
 const WG_THREADS_Y = 16;
+const TILE_SUBDIVISIONS = 14;
 
 //var<workgroup> private_color_storage: array<vec3<f32>, WG_RASTER_PIXELS_X*WG_RASTER_PIXELS_Y>;
 //var<workgroup> shape: FineShape;
@@ -41,19 +42,11 @@ fn fine_main(
     // We process one logical tile out of the 8x8 grid
     let tile_x = workgroup_id.x;
     let tile_y = workgroup_id.y;
-    let offset_x = (workgroup_id.z % 14) * 16;
-    let offset_y = (workgroup_id.z / 14) * 16;
 
-    /*
-        // only do this if thread0,0
-    let max_shapes = 1000;
-    let job_count_previous = atomicAdd(&g_misc.histogram[tile_y][tile_x], -1 * max_shapes);
-    let job_count_taken = min(job_count_previous, max_shapes);
-
-    if (job_count_taken < 0) {
-        return;
-    }
-    */
+    // Since one tile is 224*80=17920 px, we divide it further into 16x16 for each WG.
+    // TODO: try looping instead
+    let offset_x = (workgroup_id.z % TILE_SUBDIVISIONS) * 16;
+    let offset_y = (workgroup_id.z / TILE_SUBDIVISIONS) * 16;
 
 
     // The view box this *workgroup* is responsible for.

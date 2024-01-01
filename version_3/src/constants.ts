@@ -15,8 +15,8 @@ export const TILES_Y      = 8
 //export const SCREEN_HEIGHT_PX = 1080
 export const SCREEN_WIDTH_PX =  1792
 export const SCREEN_HEIGHT_PX = 640
-export const WG_RASTER_PIXELS_X  = SCREEN_WIDTH_PX/TILES_X
-export const WG_RASTER_PIXELS_Y  = SCREEN_HEIGHT_PX/TILES_Y
+export const WG_RASTER_PIXELS_X  = SCREEN_WIDTH_PX/TILES_X   // 224
+export const WG_RASTER_PIXELS_Y  = SCREEN_HEIGHT_PX/TILES_Y  // 80
 
 export const UNIFORM_BUFFER_SIZE  = 8000
 export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 48  // == 4,800,000
