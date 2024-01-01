@@ -8,7 +8,7 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 const PERFTEST_FRAME = true
 
 
-const NUM_FLARES = 4000
+const NUM_FLARES = 20000
 
 const LAUNCH_TIME_RANGE = [2.3, 4.3]
 const LAUNCH_RANGE_X = [0.1, 0.9]
@@ -121,15 +121,17 @@ export class Scene
                 if (true) {
                     let pos = new Vector2(0.10, 0.9)
                     let fw = new Firework(0, pos, NUM_FLARES)
-                    this.fireworks.push(fw)
+                    //this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
                     fw = new Firework(0, pos, NUM_FLARES)
                     this.fireworks.push(fw)
                 }
             }
-            //current_time = 1 * 1/60
-            current_time /= 10000
+            current_time = 1 * 1/60
+            //current_time = 1 * 30/60
+            //current_time = 1 * 50/60
+            //current_time /= 10000
         } else {
             // Normal auto launch
             if (current_time > this.next_launch && this.fireworks.length >= 0) {

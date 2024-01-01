@@ -76,16 +76,24 @@ fn fine_main(
     let clear_color = vec4<f32>(0.0, 0.2, 0.0, 1.0);
     var final_color = clear_color;
 
+
+    // bitmap index scan
     let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
     let shape_mask = (1u << (24 + tile_x));
-
     for (var s = 0u; s < total_shapes; s++) {
         let shape_idx = g_fine_shapes_index[tile_y][s];
         if ((shape_idx & shape_mask) == 0) {
             continue;
         }
-
         let shape = g_fine_shapes[shape_idx & 0xffffff];
+
+    /*
+    // dumb full array scan
+    let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
+    for (var s = 0u; s < total_shapes; s++) {
+        let shape = g_fine_shapes[shape_idx];
+    */
+
         let shape_size = shape.view_size_x;
         let shape_vpos = shape.view_position;
 
