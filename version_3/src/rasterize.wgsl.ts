@@ -83,16 +83,18 @@ fn fine_main(
         wg_view_min.y + f32(local_invocation_id.y),
     );
 
-    // This check should never be needed, we use even tile divisions
     if (false) {
         let view_max = vec2<f32>(
             view_min.x + 1.0,
             view_min.y + 1.0,
         );
 
-        if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
-            return;
-        }
+        // This check should never be needed, we use even tile divisions
+        // In fact, this check causes uniform control flow proof failures,
+        // even when if(false) :(
+        //if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
+            //return;
+        //}
     }
 
     let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
@@ -136,6 +138,8 @@ fn fine_main(
                         let pdistance = length(rough_dist);
                         //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
                         let ratio = 1.0 - step(shape_size, pdistance);
+
+                        // This check seems to have a tiny performance benefit
                         if (ratio > 0.0) {
                             if (PERFORMANCE_TEST_MONOCHROME) {
                                 final_color.b = 1.0;
