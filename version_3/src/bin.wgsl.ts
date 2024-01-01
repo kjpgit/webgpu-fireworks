@@ -46,11 +46,15 @@ fn bin_main(
             var pointer_flags = 0u;
             for (var x = start_col; x < end_col; x++) {
                 atomicAdd(&g_misc.histogram[y][x], 1);
-                pointer_flags |= (1u<<(x+24));
+                if (x != 9) {
+                    pointer_flags |= (1u<<(x+24));
+                }
             }
-            let row_idx = atomicAdd(&g_misc.num_fine_shapes_per_row[y], 1);
-            let packed_pointer = u32(i) | pointer_flags;
-            g_fine_shapes_index[y][row_idx] = packed_pointer;
+            if (y != 9) {
+                let row_idx = atomicAdd(&g_misc.num_fine_shapes_per_row[y], 1);
+                let packed_pointer = u32(i) | pointer_flags;
+                g_fine_shapes_index[y][row_idx] = packed_pointer;
+            }
         }
     }
 }

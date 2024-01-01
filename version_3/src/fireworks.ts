@@ -8,7 +8,7 @@ import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 const DEBUG_LOCK_FRAME = true
 
 
-const NUM_FLARES = 40
+const NUM_FLARES = 400
 
 const LAUNCH_TIME_RANGE = [2.3, 4.3]
 const LAUNCH_RANGE_X = [0.1, 0.9]
@@ -129,7 +129,7 @@ export class Scene
                 }
             }
             //current_time = 1 * 1/60
-            current_time /= 100
+            //current_time /= 100
         }
 
         if (!DEBUG_LOCK_FRAME && current_time > this.next_launch && this.fireworks.length >= 0) {
