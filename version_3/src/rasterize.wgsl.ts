@@ -37,6 +37,8 @@ fn fine_main(
     let tile_x = workgroup_id.x;
     let tile_y = workgroup_id.y;
 
+    /*
+        // only do this if thread0,0
     let max_shapes = 1000;
     let job_count_previous = atomicAdd(&g_misc.histogram[tile_y][tile_x], -1 * max_shapes);
     let job_count_taken = min(job_count_previous, max_shapes);
@@ -44,6 +46,7 @@ fn fine_main(
     if (job_count_taken < 0) {
         return;
     }
+    */
 
     let shape_mask = (1u << (24 + tile_x));
 
