@@ -14,8 +14,17 @@ ${constants.WGSL_INCLUDE}
 @group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec3<f32>>;
 @group(0) @binding(4) var<storage, read>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
 
-const PERFORMANCE_TEST_HEATMAP = true;
-const PERFORMANCE_TEST_NOOOP = false;
+
+// Testing with 40k x2 locked frame (GPU avg ms)
+// -------------------------------------------------
+// noop         = 14 - 16  (although cpu and gpu load is high)
+// heatmap      = 160
+// monochrome   = 300
+// normal       = 300
+
+const PERFORMANCE_TEST_NOOOP      = false;
+const PERFORMANCE_TEST_HEATMAP    = false;
+const PERFORMANCE_TEST_MONOCHROME = false;
 
 
 //
@@ -110,8 +119,11 @@ fn fine_main(
                     //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
                     let ratio = 1.0 - step(shape_size, pdistance);
                     if (ratio > 0.0) {
-                        final_color += get_shape_color(shape).rgb * ratio;
-                        //final_color += 0.01 * ratio;
+                        if (PERFORMANCE_TEST_MONOCHROME) {
+                            final_color.b = 1.0;
+                        } else {
+                            final_color += get_shape_color(shape).rgb * ratio;
+                        }
                     }
                 }
             }

@@ -14,7 +14,7 @@ ${constants.WGSL_INCLUDE}
 @group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec3<f32>>;
 @group(0) @binding(4) var<storage, read>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
 
-const PERFORMANCE_TEST_HEATMAP = true;
+const PERFORMANCE_TEST_HEATMAP = false;
 const PERFORMANCE_TEST_NOOOP = false;
 
 
@@ -30,8 +30,8 @@ const WG_THREADS_X = 16;
 const WG_THREADS_Y = 16;
 const TILE_SUBDIVISIONS = 14;
 
-//var<workgroup> private_color_storage: array<vec3<f32>, WG_RASTER_PIXELS_X*WG_RASTER_PIXELS_Y>;
-//var<workgroup> shape: FineShape;
+var<workgroup> private_color_storage: array<vec3<f32>, 16*16>;
+var<workgroup> shape: FineShape;
 
 @compute @workgroup_size(WG_THREADS_X, WG_THREADS_Y)
 fn fine_main(
@@ -45,8 +45,10 @@ fn fine_main(
 
     // Since one tile is 224*80=17920 px, we divide it further into 16x16 for each WG.
     // TODO: try looping instead
-    let offset_x = (workgroup_id.z % TILE_SUBDIVISIONS) * 16;
-    let offset_y = (workgroup_id.z / TILE_SUBDIVISIONS) * 16;
+    //let offset_x = (workgroup_id.z % TILE_SUBDIVISIONS) * 16;
+    //let offset_y = (workgroup_id.z / TILE_SUBDIVISIONS) * 16;
+    let offset_x = 0u;
+    let offset_y = 0u;
 
 
     // The view box this *workgroup* is responsible for.
@@ -55,25 +57,20 @@ fn fine_main(
         f32(workgroup_id.y * WG_RASTER_PIXELS_Y + offset_y),
     );
 
-    // The view box this *thread* is responsible for.
-    let view_min = vec2<f32>(
-        wg_view_min.x + f32(local_invocation_id.x),
-        wg_view_min.y + f32(local_invocation_id.y),
+    let wg_view_max = vec2<f32>(
+        wg_view_min.x + WG_RASTER_PIXELS_X,
+        wg_view_min.y + WG_RASTER_PIXELS_Y,
     );
 
-    // This check should never be needed, we use even tile divisions
-    if (false) {
-        let view_max = vec2<f32>(
-            view_min.x + 1.0,
-            view_min.y + 1.0,
-        );
 
-        if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
-            return;
-        }
-    }
+    // The view box this *thread* is responsible for.
+    let view_min = vec2<f32>(
+        wg_view_min.x + f32(local_invocation_id.x) + 0.5,
+        wg_view_min.y + f32(local_invocation_id.y) + 0.5,
+    );
 
-    let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
+
+    //let view_center_main = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
     let clear_color = vec3<f32>(0.0, 0.2, 0.0);
     var final_color = clear_color;
 
@@ -87,31 +84,33 @@ fn fine_main(
             if ((shape_idx & shape_mask) == 0) {
                 continue;
             }
-            let shape = g_fine_shapes[shape_idx & 0xffffff];
-            //shape = g_fine_shapes[shape_idx & 0xffffff];
-            //workgroupBarrier();  // Great way to prove we have uniform control flow!
 
-        /*
-        // dumb full array scan
-        let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
-        for (var s = 0; s < total_shapes; s++) {
-            let shape = g_fine_shapes[s];
-        */
+            //let shape = g_fine_shapes[shape_idx & 0xffffff];
+            shape = g_fine_shapes[shape_idx & 0xffffff];
+            workgroupBarrier();  // Great way to prove we have uniform control flow!
 
             let shape_size = shape.view_size_x;
             let shape_vpos = shape.view_position;
 
-            if (PERFORMANCE_TEST_HEATMAP) {
-                final_color.r += 0.01;
-            } else {
-                // Real work
-                if (circle_bbox_check(shape_vpos, view_center) <= shape_size) {
-                    let pdistance = point_sdf(view_center, shape_vpos);
-                    //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
-                    let ratio = 1.0 - step(shape_size, pdistance);
-                    if (ratio > 0.0) {
-                        final_color += get_shape_color(shape).rgb * ratio;
-                        //final_color += 0.01 * ratio;
+            for (var x = view_min.x; x < wg_view_max.x; x += 1.0) {
+                for (var y = view_min.y; y < wg_view_max.y; y += 1.0) {
+                    if (PERFORMANCE_TEST_HEATMAP) {
+                        //final_color.r += 0.01;
+                    } else {
+                        // Real work
+                        let view_center = vec2<f32>(x,y);
+                        if (circle_bbox_check(shape_vpos, view_center) <= shape_size) {
+                            let pdistance = point_sdf(view_center, shape_vpos);
+                            //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
+                            let ratio = 1.0 - step(shape_size, pdistance);
+                            if (ratio > 0.0) {
+                                let tx = x - view_min.x;
+                                let ty = y - view_min.y;
+                                private_color_storage[tx][ty] =
+                                final_color += get_shape_color(shape).rgb * ratio;
+                                //final_color += 0.01 * ratio;
+                            }
+                        }
                     }
                 }
             }
@@ -119,7 +118,7 @@ fn fine_main(
     }
 
     // Update main memory
-    output_texture_store(view_center.x, view_center.y, final_color);
+    //output_texture_store(view_center.x, view_center.y, final_color);
 }
 
 
