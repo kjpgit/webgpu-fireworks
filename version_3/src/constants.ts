@@ -77,7 +77,7 @@ struct RoughShape {
     world_size:    f32,
     start_time:    f32,
     duration_secs: f32,
-    unused:        u32,
+    flags:         u32,
 
     color:         vec4<f32>,  // we could pack this if we wanted.
 };

@@ -119,7 +119,7 @@ export class Scene
 
         if (PERFTEST_PAGE > 0) {
             this.draw_test_page()
-            this.write_uniform(0)
+            this.write_uniform(current_time)
             return;
         }
 
@@ -218,14 +218,17 @@ export class Scene
         return hist
     }
 
+    // 10,000 little dots, so pretty
     draw_test_page() {
         for (var x = 0; x < 200; x++) {
             for (var y = 0; y < 50; y++) {
                 let color = new Color4(0.0, 0.0, 0.0, 0.0);
-                if (x/10 % 2 == 0) {
+                color.b = 1;
+                if (x % 10 == 0) {
                     color.r = 1;
                 }
-                if (y/5 % 5 == 0) {
+                if (y % 10 == 0 || x == 100) {
+                    color.r = 0;
                     color.g = 1;
                 }
                 let wx = (x + 0.5) / 200
@@ -242,9 +245,9 @@ export class Scene
         this.firework_wrapper.append_raw_f32(0)
 
         this.firework_wrapper.append_raw_f32(world_radius)
-        this.firework_wrapper.append_raw_f32(0)
-        this.firework_wrapper.append_raw_f32(9999999)  // seconds
-        this.firework_wrapper.append_raw_f32(999)      // unused
+        this.firework_wrapper.append_raw_f32(0)    // start time
+        this.firework_wrapper.append_raw_f32(999999)    // duration
+        this.firework_wrapper.append_raw_u32(0x01)  // nogravity
 
         this.firework_wrapper.append_raw_color4(color)
     }

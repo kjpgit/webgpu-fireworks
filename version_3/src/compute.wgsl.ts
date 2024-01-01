@@ -49,7 +49,9 @@ fn rough_main(
     var world_position = shape.world_position;
     world_position.x += get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
     world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
-    world_position.y += get_total_gravity_distance(elapsed_secs);
+    if ((shape.flags & 0x01) == 0) {
+        world_position.y += get_total_gravity_distance(elapsed_secs);
+    }
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.
