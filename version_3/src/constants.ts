@@ -17,15 +17,17 @@ export const NUM_TILES_TOTAL      = 4480
 
 export const MAX_ROUGH_SHAPES     = 10000
 export const MAX_FINE_SHAPES      = 10000   // 160KB to hold every fine shape
+export const MAX_FINE_POINTERS    = MAX_ROUGH_SHAPES * 4  // can hold all tile overlaps
 
 export const UNIFORM_BUFFER_SIZE  = 8000
-export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864)
+export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864) + (MAX_FINE_POINTERS*4)
 export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 48  // 480KB
 export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 32   // 320KB
 export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // 18MB
 
 export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
 export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
+export const WG_BIN2_WORKLOAD     = 32   // Fine shapes processed per WG
 
 export const WGSL_INCLUDE = `
 
@@ -54,12 +56,17 @@ struct MiscData {
     // This is calculated during rough shape processing, when appending to fine buffer
     num_fine_shapes: atomic<i32>,
 
+    // This allocates memory during bin step 2
+    num_fine_pointers: atomic<i32>,
+
     // This is calculated during binning step 1, and can be read by the GUI
     @align(4096) num_shapes_per_tile: array<array<atomic<i32>, NUM_TILES_X>, NUM_TILES_Y>,
 
     // This populated during binning step 2
     // It is read by the fine rasterizer
     @align(4096) tile_shape_index: array<array<FineIndex>, NUM_TILES_X>, NUM_TILES_Y>,
+
+    @align(4096) tile_shape_pointers: array<u32, MAX_FINE_POINTERS>,
 };
 
 struct FineIndex {
