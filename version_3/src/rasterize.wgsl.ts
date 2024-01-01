@@ -20,11 +20,12 @@ ${constants.WGSL_INCLUDE}
 // noop         = 14 - 16  (although cpu and gpu load is high)
 // heatmap      = 160
 // monochrome   = 300
+// monochrome with full shape scan = 1400-1700
 // normal       = 300
 
 const PERFORMANCE_TEST_NOOOP      = false;
 const PERFORMANCE_TEST_HEATMAP    = false;
-const PERFORMANCE_TEST_MONOCHROME = false;
+const PERFORMANCE_TEST_MONOCHROME = true;
 
 
 //
@@ -102,7 +103,7 @@ fn fine_main(
 
         /*
         // dumb full array scan
-        let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
+        let total_shapes = i32(g_misc.num_fine_shapes);
         for (var s = 0; s < total_shapes; s++) {
             let shape = g_fine_shapes[s];
         */
