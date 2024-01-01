@@ -84,10 +84,10 @@ fn fine_main(
     if (!PERFORMANCE_TEST_NOOOP) {
         // bitmap index scan
         //let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
-        let total_shapes = g_misc.num_fine_shapes_per_row[tile_y];
+        let total_shapes = i32(g_misc.num_fine_shapes_per_row[tile_y]);
 
         let shape_mask = (1u << (24 + tile_x));
-        for (var s = 0u; s < total_shapes; s++) {
+        for (var s = 0; s < total_shapes; s++) {
             let shape_idx = g_fine_shapes_index[tile_y][s];
             if ((shape_idx & shape_mask) == 0) {
                 continue;
@@ -99,7 +99,7 @@ fn fine_main(
         /*
         // dumb full array scan
         let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
-        for (var s = 0u; s < total_shapes; s++) {
+        for (var s = 0; s < total_shapes; s++) {
             let shape = g_fine_shapes[s];
         */
 
