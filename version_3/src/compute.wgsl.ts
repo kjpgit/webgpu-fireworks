@@ -57,7 +57,6 @@ fn rough_main(
     // A world size of 1.0 is the entire screen, tall and wide.
     let world_size = shape.world_size;
 
-
     // Remove any shape that has any dimension out of the world space
     if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {
         return;
@@ -67,7 +66,6 @@ fn rough_main(
     }
 
     // Project to viewport coordinates and save to rasterize work queue
-    // ... It feels like we are so tempted to rasterize it ourself here
     let view_x = world_position.x * SCREEN_WIDTH_PX;
     let view_y = SCREEN_HEIGHT_PX - (world_position.y * SCREEN_HEIGHT_PX);
     let view_size_x = world_size * SCREEN_WIDTH_PX;
@@ -75,12 +73,14 @@ fn rough_main(
     let color_ratio = 1 - smoothstep(0.0, shape.duration_secs, elapsed_secs);
 
     // Append to fine shape array
-    // TODO: add visbility bitmask?
     let shape_index = atomicAdd(&g_misc.num_fine_shapes, 1);
     g_fine_shapes[shape_index].view_position.x = view_x;
     g_fine_shapes[shape_index].view_position.y = view_y;
     g_fine_shapes[shape_index].view_size_x = view_size_x;
     g_fine_shapes[shape_index].packed_color = pack4x8unorm(shape.color * color_ratio);
+
+    // We could also update histogram, but lets not do too much in this shader,
+    // so we can profile it easier.
 }
 
 

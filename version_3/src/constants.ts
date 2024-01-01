@@ -37,7 +37,7 @@ const TILE_SIZE_X         = ${TILE_SIZE_X};
 const TILE_SIZE_Y         = ${TILE_SIZE_Y};
 const NUM_TILES_X         = ${NUM_TILES_X};
 const NUM_TILES_Y         = ${NUM_TILES_Y};
-const MAX_FINE_SHAPES     = ${MAX_FINE_SHAPES};
+//const MAX_FINE_SHAPES     = ${MAX_FINE_SHAPES};
 const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
 const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
 ////////////////////////////////////////////////////////////
