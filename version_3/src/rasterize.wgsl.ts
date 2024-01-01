@@ -68,14 +68,17 @@ fn fine_main(
         wg_view_min.y + f32(local_invocation_id.y),
     );
 
-    let view_max = vec2<f32>(
-        view_min.x + 1.0,
-        view_min.y + 1.0,
-    );
+    // This check should never be needed, we use even tile divisions
+    if (false) {
+        let view_max = vec2<f32>(
+            view_min.x + 1.0,
+            view_min.y + 1.0,
+        );
 
-    //if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
-        //return;
-    //}
+        if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
+            return;
+        }
+    }
 
     let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
     let clear_color = vec3<f32>(0.0, 0.2, 0.0);
@@ -83,7 +86,6 @@ fn fine_main(
 
     if (!PERFORMANCE_TEST_NOOOP) {
         // bitmap index scan
-        //let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
         let total_shapes = i32(g_misc.num_fine_shapes_per_row[tile_y]);
 
         let shape_mask = (1u << (24 + tile_x));
