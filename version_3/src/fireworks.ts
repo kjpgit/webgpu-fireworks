@@ -122,9 +122,9 @@ export class Scene
                     let pos: Vector2
                     let fw: Firework
 
-                    pos = new Vector2(0.10, 0.9)
-                    fw = new Firework(0, pos, NUM_FLARES)
-                    this.fireworks.push(fw)
+                    //pos = new Vector2(0.10, 0.9)
+                    //fw = new Firework(0, pos, NUM_FLARES)
+                    //this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
                     fw = new Firework(0, pos, NUM_FLARES)

@@ -8,10 +8,11 @@ ${constants.WGSL_INCLUDE}
 
 
 //@group(0) @binding(0) var<uniform>              g_uniform: UniformData;
-@group(0) @binding(1) var<storage, read_write>    g_misc: MiscData;
+//@group(0) @binding(1) var<storage, read_write>    g_misc: MiscData;
+@group(0) @binding(1) var<storage, read>        g_misc: MiscDataRead;
 @group(0) @binding(2) var<storage, read>        g_fine_shapes: array<FineShape>;
 @group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec4<f32>>;
-@group(0) @binding(4) var<storage, read_write>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
+@group(0) @binding(4) var<storage, read>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
 
 
 //
@@ -26,6 +27,7 @@ const WG_THREADS_X = 16;
 const WG_THREADS_Y = 16;
 
 //var<workgroup> private_color_storage: array<vec4<f32>, WG_RASTER_PIXELS_X*WG_RASTER_PIXELS_Y>;
+var<workgroup> shape: FineShape;
 
 @compute @workgroup_size(WG_THREADS_X, WG_THREADS_Y)
 fn fine_main(
@@ -68,9 +70,9 @@ fn fine_main(
         view_min.y + 1.0,
     );
 
-    if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
-        return;
-    }
+    //if (view_max.x > SCREEN_WIDTH_PX || view_max.y > SCREEN_HEIGHT_PX) {
+        //return;
+    //}
 
     let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
     let clear_color = vec4<f32>(0.0, 0.2, 0.0, 1.0);
@@ -78,14 +80,19 @@ fn fine_main(
 
 
     // bitmap index scan
-    let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
+    //let total_shapes = atomicLoad(&g_misc.num_fine_shapes_per_row[tile_y]);
+    let total_shapes = g_misc.num_fine_shapes_per_row[tile_y];
+
     let shape_mask = (1u << (24 + tile_x));
     for (var s = 0u; s < total_shapes; s++) {
         let shape_idx = g_fine_shapes_index[tile_y][s];
         if ((shape_idx & shape_mask) == 0) {
             continue;
         }
-        let shape = g_fine_shapes[shape_idx & 0xffffff];
+        //let shape = g_fine_shapes[shape_idx & 0xffffff];
+
+        shape = g_fine_shapes[shape_idx & 0xffffff];
+        //workgroupBarrier();  // Great way to prove we have uniform control flow!
 
     /*
     // dumb full array scan

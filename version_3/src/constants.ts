@@ -63,6 +63,11 @@ struct MiscData {
     //dispatch_indirect_rasterize_z: atomic<u32>,
 };
 
+struct MiscDataRead {
+    num_fine_shapes: u32,
+    @align(32) num_fine_shapes_per_row:  array<u32, TILES_Y>,
+}
+
 
 // A basic particle.
 struct RoughShape {
