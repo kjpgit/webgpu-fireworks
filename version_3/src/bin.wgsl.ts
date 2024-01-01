@@ -9,7 +9,7 @@ ${constants.WGSL_INCLUDE}
 
 @group(0) @binding(1) var<storage, read_write>  g_misc: MiscData;
 @group(0) @binding(2) var<storage, read>        g_fine_shapes: array<FineShape>;
-@group(0) @binding(3) var<storage, read_write>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, POINTER_BUCKETS>;
+@group(0) @binding(3) var<storage, read_write>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
 
 const WG_THREADS_X = 128;
 
@@ -42,15 +42,15 @@ fn bin_main(
         end_col = min(end_col, 8);
         end_row = min(end_row, 8);
 
-        for (var r = start_row; r < end_row; r++) {
+        for (var y = start_row; y < end_row; y++) {
             var pointer_flags = 0u;
-            for (var c = start_col; c < end_col; c++) {
-                atomicAdd(&g_misc.histogram[c + (r*8)], 1);
-                pointer_flags |= (1u<<(c+24));
+            for (var x = start_col; x < end_col; x++) {
+                atomicAdd(&g_misc.histogram[y][x], 1);
+                pointer_flags |= (1u<<(x+24));
             }
-            let row_idx = atomicAdd(&g_misc.num_fine_shapes_per_row[r], 1);
+            let row_idx = atomicAdd(&g_misc.num_fine_shapes_per_row[y], 1);
             let packed_pointer = u32(i) | pointer_flags;
-            g_fine_shapes_index[r][row_idx] = packed_pointer;
+            g_fine_shapes_index[y][row_idx] = packed_pointer;
         }
     }
 }

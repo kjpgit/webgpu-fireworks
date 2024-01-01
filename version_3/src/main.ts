@@ -253,6 +253,7 @@ const init_webgpu = async (main: Main) => {
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
             { binding: 3, resource: { buffer: output_texture_gpu } },
+            { binding: 4, resource: { buffer: fine_idx_buffer_gpu } },
         ],
     });
 
