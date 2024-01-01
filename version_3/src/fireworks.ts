@@ -5,10 +5,10 @@ import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const PERFTEST_FRAME = 1
+const PERFTEST_FRAME = 0
 
 
-const NUM_FLARES = 40000
+const NUM_FLARES = 4000
 const MAX_FIREWORKS = 2
 
 const LAUNCH_TIME_RANGE = [2.2, 3.0]
