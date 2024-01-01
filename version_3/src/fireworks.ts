@@ -221,7 +221,13 @@ export class Scene
     draw_test_page() {
         for (var x = 0; x < 200; x++) {
             for (var y = 0; y < 50; y++) {
-                let color = get_random_color()
+                let color = new Color4(0.0, 0.0, 0.0, 0.0);
+                if (x/10 % 2 == 0) {
+                    color.r = 1;
+                }
+                if (y/5 % 5 == 0) {
+                    color.g = 1;
+                }
                 let wx = (x + 0.5) / 200
                 let wy = (y + 0.5) / 50
                 this.draw_test_dot(new Vector2(wx, wy), 0.0025, color)
