@@ -118,7 +118,11 @@ export class Scene
         this.firework_wrapper.clear();
 
         if (PERFTEST_PAGE > 0) {
-            this.draw_test_page()
+            if (PERFTEST_PAGE == 1) {
+                this.draw_test_page()
+            } else if (PERFTEST_PAGE == 2) {
+                this.draw_test_page2()
+            }
             this.write_uniform(current_time)
             return;
         }
@@ -219,10 +223,13 @@ export class Scene
     }
 
     // 10,000 little dots, so pretty
+    // Getting 30fps starting 10k branch
     draw_test_page() {
         for (var x = 0; x < 200; x++) {
             for (var y = 0; y < 50; y++) {
-                let color = new Color4(0.0, 0.0, 0.0, 0.0);
+                //let color = new Color4(0.0, 0.0, 0.0, 0.0);
+                let color = get_random_color();
+                /*
                 color.b = 1;
                 if (x % 10 == 0) {
                     color.r = 1;
@@ -231,12 +238,29 @@ export class Scene
                     color.r = 0;
                     color.g = 1;
                 }
+               */
                 let wx = (x + 0.5) / 200
                 let wy = (y + 0.5) / 50
                 this.draw_test_dot(new Vector2(wx, wy), 0.0025, color)
             }
         }
     }
+
+    // Shows our tile layout
+    draw_test_page2() {
+        for (var x = 0; x < constants.TILES_X; x++) {
+            for (var y = 0; y < constants.TILES_Y; y++) {
+                // If only we could draw a line :)
+                // Draw corners for now
+                let wx = (x + 0.0) / constants.TILES_X
+                let wy = (y + 0.0) / constants.TILES_Y
+                let color = new Color4(0.0, 0.0, 0.0, 0.0);
+                color.b = 1;
+                this.draw_test_dot(new Vector2(wx, wy), 0.0010, color)
+            }
+        }
+    }
+
 
     draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4) {
         this.firework_wrapper.append_raw_f32(world_pos.x)
