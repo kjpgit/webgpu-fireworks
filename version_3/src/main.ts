@@ -14,7 +14,7 @@ class Main
 {
     /* Troubleshooting */
     debug_max_frames = -1
-    debug_show_histogram = false
+    debug_show_histogram = true
     debug_max_perf_lines = 10000
 
 
@@ -253,7 +253,7 @@ const init_webgpu = async (main: Main) => {
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
             { binding: 3, resource: { buffer: output_texture_gpu } },
-            { binding: 4, resource: { buffer: fine_idx_buffer_gpu } },
+            //{ binding: 4, resource: { buffer: fine_idx_buffer_gpu } },
         ],
     });
 
