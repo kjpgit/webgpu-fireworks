@@ -10,12 +10,12 @@ const PERFTEST_FRAME = true
 
 const NUM_FLARES = 20000
 
-const LAUNCH_TIME_RANGE = [2.3, 4.3]
-const LAUNCH_RANGE_X = [0.1, 0.9]
-const LAUNCH_RANGE_Y = [0.5, 0.9]
+const LAUNCH_TIME_RANGE = [2.0, 3.0]
+const LAUNCH_RANGE_X = [0.5, 0.5]
+const LAUNCH_RANGE_Y = [0.5, 0.5]
 
 const FLARE_DURATION_RANGE = [1.0, 4.0]
-const FLARE_SIZE_RANGE = [1.0, 30.0]
+const FLARE_SIZE_RANGE = [0.001, 0.009]
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 
 const GRAVITY = -0.04
@@ -119,9 +119,12 @@ export class Scene
         if (PERFTEST_FRAME) {
             if (this.fireworks.length == 0) {
                 if (true) {
-                    let pos = new Vector2(0.10, 0.9)
-                    let fw = new Firework(0, pos, NUM_FLARES)
-                    //this.fireworks.push(fw)
+                    let pos: Vector2
+                    let fw: Firework
+
+                    pos = new Vector2(0.10, 0.9)
+                    fw = new Firework(0, pos, NUM_FLARES)
+                    this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
                     fw = new Firework(0, pos, NUM_FLARES)
@@ -129,7 +132,7 @@ export class Scene
                 }
             }
             current_time = 1 * 1/60
-            //current_time = 1 * 30/60
+            current_time = 1 * 30/60
             //current_time = 1 * 50/60
             //current_time /= 10000
         } else {
@@ -154,7 +157,7 @@ export class Scene
 
         let fw = new Firework(current_time, pos, NUM_FLARES)
         this.fireworks.push(fw)
-        while (this.fireworks.length > 10) {
+        while (this.fireworks.length > 5) {
             this.fireworks.shift()
         }
     }

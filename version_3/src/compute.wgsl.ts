@@ -55,11 +55,12 @@ fn rough_main(
     // A world size of 1.0 is the entire screen, tall and wide.
     let world_size = shape.world_size;
 
-    // Remove segments totally out of the world space
-    if (max(world_position.x + world_size, world_position.y + world_size) < 0) {
+
+    // Remove any shape that has any dimension out of the world space
+    if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {
         return;
     }
-    if (min(world_position.x - world_size, world_position.y - world_size) > 1.0) {
+    if (max(world_position.x - world_size, world_position.y - world_size) > 1.0) {
         return;
     }
 
@@ -67,7 +68,7 @@ fn rough_main(
     // ... It feels like we are so tempted to rasterize it ourself here
     let view_x = world_position.x * SCREEN_WIDTH_PX;
     let view_y = SCREEN_HEIGHT_PX - (world_position.y * SCREEN_HEIGHT_PX);
-    let view_size_x = world_size;
+    let view_size_x = world_size * SCREEN_WIDTH_PX;
 
     let color_ratio = 1 - smoothstep(0.0, shape.duration_secs, elapsed_secs);
 
@@ -91,6 +92,7 @@ fn get_total_explosion_distance(elapsed_secs: f32, velocity: f32) -> f32
 
 
 // Simulate gravity with terminal velocity speed
+// todo: blend the approach to terminal velocity, due to exponential air drag?
 // todo: add variance for different surface area
 fn get_total_gravity_distance(elapsed_secs: f32) -> f32
 {
