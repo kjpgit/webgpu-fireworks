@@ -5,8 +5,8 @@
 // if they are distributed evenly across the screen, or if they are all stacked
 // on each other.
 
-export const MAX_ROUGH_SHAPES     = 100000
-export const MAX_FINE_SHAPES      = 1000000
+export const MAX_ROUGH_SHAPES     = 10000
+export const MAX_FINE_SHAPES      = 10000   // 160KB to hold every fine shape
 
 export const TILES_X      = 8
 export const TILES_Y      = 8

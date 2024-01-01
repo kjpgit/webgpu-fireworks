@@ -6,9 +6,10 @@ import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 const PERFTEST_FRAME = 0
+const PERFTEST_PAGE = 1
 
 
-const NUM_FLARES = 4000
+const NUM_FLARES = 1
 const MAX_FIREWORKS = 2
 
 const LAUNCH_TIME_RANGE = [2.2, 3.0]
@@ -16,7 +17,7 @@ const LAUNCH_RANGE_X = [0.2, 0.8]
 const LAUNCH_RANGE_Y = [0.5, 0.8]
 
 const FLARE_DURATION_RANGE = [1.0, 4.0]
-const FLARE_SIZE_RANGE = [0.001, 0.009]
+const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 
 const GRAVITY = -0.04
@@ -116,8 +117,14 @@ export class Scene
         this.uniform_wrapper.clear();
         this.firework_wrapper.clear();
 
+        if (PERFTEST_PAGE > 0) {
+            this.draw_test_page()
+            this.write_uniform(0)
+            return;
+        }
+
         // Rough perf testing, not an exact science
-        if (PERFTEST_FRAME) {
+        if (PERFTEST_FRAME > 0) {
             if (this.fireworks.length == 0) {
                 if (true) {
                     let pos: Vector2
@@ -126,14 +133,14 @@ export class Scene
                     pos = new Vector2(0.10, 0.9)
                     fw = new Firework(0, pos, NUM_FLARES)
                     //fw = new Firework(48/60, pos, NUM_FLARES)
-                    this.fireworks.push(fw)
+                    //this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
                     fw = new Firework(0, pos, NUM_FLARES)
                     this.fireworks.push(fw)
                 }
             }
-            current_time = 1 * 1/60
+            current_time = 0 * 1/60
             //current_time = 1 * 50/60
             //current_time = 1 * 50/60
             //current_time /= 10000
@@ -144,7 +151,6 @@ export class Scene
                 this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
             }
         }
-
 
         for (const fw of this.fireworks) {
             this.write_firework(fw)
@@ -210,6 +216,31 @@ export class Scene
         //hist += `raw: ${misc_data.slice(0, 256)}`
         //hist += "\n"
         return hist
+    }
+
+    draw_test_page() {
+        for (var x = 0; x < 200; x++) {
+            for (var y = 0; y < 50; y++) {
+                let color = get_random_color()
+                let wx = (x + 0.5) / 200
+                let wy = (y + 0.5) / 50
+                this.draw_test_dot(new Vector2(wx, wy), 0.0025, color)
+            }
+        }
+    }
+
+    draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4) {
+        this.firework_wrapper.append_raw_f32(world_pos.x)
+        this.firework_wrapper.append_raw_f32(world_pos.y)
+        this.firework_wrapper.append_raw_f32(0)
+        this.firework_wrapper.append_raw_f32(0)
+
+        this.firework_wrapper.append_raw_f32(world_radius)
+        this.firework_wrapper.append_raw_f32(0)
+        this.firework_wrapper.append_raw_f32(9999999)  // seconds
+        this.firework_wrapper.append_raw_f32(999)      // unused
+
+        this.firework_wrapper.append_raw_color4(color)
     }
 }
 
