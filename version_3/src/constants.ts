@@ -27,7 +27,7 @@ export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // 
 
 export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
 export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
-export const WG_BIN2_WORKLOAD     = 32   // Fine shapes processed per WG
+export const WG_BIN2_WORKLOAD     = 32
 
 export const WGSL_INCLUDE = `
 
