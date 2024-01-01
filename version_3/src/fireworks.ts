@@ -123,9 +123,9 @@ export class Scene
                     let fw = new Firework(0, pos, NUM_FLARES)
                     this.fireworks.push(fw)
 
-                    pos = new Vector2(0.5, 0.5)
-                    fw = new Firework(0, pos, NUM_FLARES)
-                    this.fireworks.push(fw)
+                    //pos = new Vector2(0.5, 0.5)
+                    //fw = new Firework(0, pos, NUM_FLARES)
+                    //this.fireworks.push(fw)
                 }
             }
             //current_time = 1 * 1/60
@@ -179,19 +179,24 @@ export class Scene
     }
 
     get_histogram(misc_data: Uint32Array) : string {
+        let total_shapes = misc_data[0]
+        let shapes_per_row = misc_data.slice(32/4,32/4 + 8)
+        let tile_array = misc_data.slice(128/4, 128/4 + 8*8)
+        //console.log(tile_array);
+
         let hist = ""
         hist += `------------------- \n`
         let total_blends = 0
-        for (var i = 0; i < 8; i++) {
-            hist += `row ${i}: `
-            for (var j = 0; j < 8; j++) {
-                let num = misc_data[128/4 + j + i*8]
+        for (var y = 0; y < 8; y++) {
+            hist += `row ${y}: (${shapes_per_row[y].toString().padStart(5, " ")})    | `
+            for (var x = 0; x < 8; x++) {
+                let num = tile_array[x + y*8]
                 total_blends += num
                 hist += ` ${num.toString().padStart(5, " ")} `
             }
-            hist += "\n"
+            hist += "  | \n"
         }
-        hist += `total_shapes = ${misc_data[0]}\n`
+        hist += `total_shapes = ${total_shapes}\n`
         hist += `total_blends = ${total_blends}\n`
         //hist += `raw: ${misc_data.slice(0, 256)}`
         //hist += "\n"
