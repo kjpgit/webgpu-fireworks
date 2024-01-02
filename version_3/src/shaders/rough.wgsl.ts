@@ -51,16 +51,18 @@ fn rough_main(
         world_position.x += explosion_distance_x;
         world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
     }
+
     if ((shape.flags & SHAPE_FLAG_GRAVITY) != 0) {
         world_position.y += get_total_gravity_distance(elapsed_secs);
     }
+
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
         var angle = acos(shape.world_velocity.x) + elapsed_secs*3.0;
         var scale = 0.1;
         if (explosion_distance_x != 0.0) {
            // scale = explosion_distance_x * 0.1;
         }
-        world_position.x += cos(angle) * scale / (19/9);
+        world_position.x += cos(angle) * scale / (SCREEN_ASPECT);
         world_position.y += sin(angle) * scale;
     }
 

@@ -126,6 +126,10 @@ export class Scene
             this.draw_test_page2()
             this.write_uniform(current_time)
             return;
+        } else if (this.scene_number == 4) {
+            this.draw_test_page3()
+            this.write_uniform(0)
+            return;
         }
 
         // Rough perf testing, not an exact science
@@ -161,27 +165,6 @@ export class Scene
             this.write_firework(fw)
         }
 
-        // red center
-        this.draw_test_dot(new Vector2(0.5,0.6), 0.01, new Color4(1,0,0,0))
-        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,0,0,0))
-
-        //Yellow - no velocity
-        //this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
-                          //new Vector3(0.0, 0.0, 0.0))
-
-        // White - full x
-        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector3(1.0, 0.0, 0.0))
-
-        // Green - full y
-        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(0,1,0,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector3(0.0, 1.0, 0.0))
-
-        // blue - both x and y
-        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(0,0,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector3(0.707, 0.707, 0.0))
-
-        this.write_uniform(current_time)
     }
 
     toggle_debug(flag: number) {
@@ -328,6 +311,34 @@ export class Scene
         }
 
         this.firework_wrapper.append_raw_color4(color)
+    }
+
+    draw_test_page3() {
+        // red center
+        this.draw_test_dot(new Vector2(0.5,0.6), 0.01, new Color4(1,0,0,0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,0,0,0))
+
+        //Yellow - no velocity
+        //this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
+                          //new Vector3(0.0, 0.0, 0.0))
+
+        // White - full x
+        let flags = constants.SHAPE_FLAG_ROTATE;
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), flags,
+                          new Vector3(1.0, 0.0, 0.0))
+        // Green - full y
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(0,1,0,0), flags,
+                          new Vector3(0.0, 1.0, 0.0))
+        // blue - both x and y
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.003, new Color4(0,0,0.5,0), flags,
+                          new Vector3(0.707, 0.707, 0.0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.003, new Color4(0,0,0.5,0), flags,
+                          new Vector3(-0.707, 0.707, 0.0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,0,0.5,0), flags,
+                          new Vector3(-0.707, -0.707, 0.0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,0.5,0), flags,
+                          new Vector3(0.707, -0.707, 0.0))
+
     }
 }
 

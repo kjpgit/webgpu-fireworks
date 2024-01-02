@@ -67,6 +67,7 @@ class Main
         else if (e.key == "1") { this.scene.scene_number = 1 }
         else if (e.key == "2") { this.scene.scene_number = 2 }
         else if (e.key == "3") { this.scene.scene_number = 3 }
+        else if (e.key == "4") { this.scene.scene_number = 4 }
     }
 
     on_double_click(event: Event) {

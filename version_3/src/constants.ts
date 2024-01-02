@@ -6,6 +6,7 @@
 
 export const SCREEN_WIDTH_PX      = 1792   // 1146880 total pixels
 export const SCREEN_HEIGHT_PX     = 640
+export const SCREEN_ASPECT        = 2.8
 
 export const TILE_SIZE_X          = 16     // pixels
 export const TILE_SIZE_Y          = 16
@@ -40,6 +41,7 @@ export const WGSL_INCLUDE = `
 // IMPORTANT: These settings must match the javascript code!
 const SCREEN_WIDTH_PX     = ${SCREEN_WIDTH_PX};
 const SCREEN_HEIGHT_PX    = ${SCREEN_HEIGHT_PX};
+const SCREEN_ASPECT       = ${SCREEN_ASPECT};
 const TILE_SIZE_X         = ${TILE_SIZE_X};
 const TILE_SIZE_Y         = ${TILE_SIZE_Y};
 const NUM_TILES_X         = ${NUM_TILES_X};
