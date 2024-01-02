@@ -1,10 +1,11 @@
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 // Galaxy Engine - Copyright (C) 2023 Karl Pickett
 
 import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const PERFTEST_FRAME = 1
+const PERFTEST_FRAME = 0
 const PERFTEST_PAGE = 0
 
 

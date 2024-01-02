@@ -1,3 +1,4 @@
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 // Galaxy Engine - Copyright (C) 2023 Karl Pickett
 
 import * as constants from "./constants.js"
