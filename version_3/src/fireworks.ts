@@ -161,6 +161,8 @@ export class Scene
             this.write_firework(fw)
         }
 
+        /*
+
         this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
         this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
                           new Vector2(0.0, 0.0))
@@ -168,6 +170,7 @@ export class Scene
                           new Vector2(0.5, 0.0))
         this.draw_test_dot(new Vector2(0.5,0.2), 0.01, new Color4(0,1,1,0), constants.SHAPE_FLAG_ROTATE,
                           new Vector2(0.8, 0.0))
+                         */
 
         this.write_uniform(current_time)
     }
@@ -210,8 +213,9 @@ export class Scene
             this.firework_wrapper.append_raw_f32(flare.size)
             this.firework_wrapper.append_raw_f32(fw.start_time)
             this.firework_wrapper.append_raw_f32(flare.duration_secs)
-            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_ROTATE)
-            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_EXPLODE)
+            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_GRAVITY |
+                                                 constants.SHAPE_FLAG_ROTATE |
+                                                 constants.SHAPE_FLAG_EXPLODE)
 
             this.firework_wrapper.append_raw_color4(flare.color)
         }

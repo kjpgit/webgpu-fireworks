@@ -56,7 +56,7 @@ fn rough_main(
         var angle = acos(shape.world_velocity.x) + elapsed_secs*3.0;
         //let scale = elapsed_secs * shape.world_velocity.x * 0.1;  // ever expanding as well
         let scale = 0.1;
-        world_position.x += cos(angle) * scale;
+        //world_position.x += cos(angle) * scale;
     }
 
     // The size is a world size, so it scales independently to height and width
