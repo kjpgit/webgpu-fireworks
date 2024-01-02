@@ -1,8 +1,8 @@
 // webgpu-fireworks Copyright (C) 2023 Karl Pickett
 // All rights reserved
 
-import * as constants from "./constants.js";
-export var ComputeCode = `
+import * as constants from "../constants.js";
+export var RoughCode = `
 
 ${constants.WGSL_INCLUDE}
 

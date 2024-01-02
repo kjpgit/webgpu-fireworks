@@ -1,4 +1,4 @@
-import * as constants from "./constants.js";
+import * as constants from "../constants.js";
 export var FragmentCode = `
 
 ${constants.WGSL_INCLUDE}

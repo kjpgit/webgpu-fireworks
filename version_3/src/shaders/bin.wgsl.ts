@@ -1,7 +1,7 @@
 // webgpu-fireworks Copyright (C) 2023 Karl Pickett
 // All rights reserved
 
-import * as constants from "./constants.js";
+import * as constants from "../constants.js";
 export var BinCode = `
 
 ${constants.WGSL_INCLUDE}

@@ -4,10 +4,10 @@
 import * as constants from "./constants.js"
 import { FPSMonitor, SceneTimer, BufferWrapper, do_throw } from "./util.js"
 import { Scene } from "./fireworks.js"
-import { ComputeCode } from "./compute.wgsl.js"
-import { RasterizeCode } from "./rasterize.wgsl.js"
-import { FragmentCode } from "./fragment.wgsl.js"
-import { BinCode } from "./bin.wgsl.js"
+import { RoughCode } from "./shaders/rough.wgsl.js"
+import { FineCode } from "./shaders/fine.wgsl.js"
+import { BinCode } from "./shaders/bin.wgsl.js"
+import { FragmentCode } from "./shaders/quad.wgsl.js"
 
 
 class Main
@@ -137,13 +137,13 @@ const init_webgpu = async (main: Main) => {
 
     // Shaders to compile
     const rough_module = device.createShaderModule({
-        label: 'rough_module', code: ComputeCode,
+        label: 'rough_module', code: RoughCode,
     });
     const bin_module = device.createShaderModule({
         label: 'bin_module', code: BinCode,
     });
     const fine_module = device.createShaderModule({
-        label: 'fine_module', code: RasterizeCode,
+        label: 'fine_module', code: FineCode,
     });
     const quad_fragment_module = device.createShaderModule({
         label: 'quad_fragment_module', code: FragmentCode,
