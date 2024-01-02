@@ -1,4 +1,3 @@
-// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 // Galaxy Engine - Copyright (C) 2023 Karl Pickett
 
 import { float_to_u8  } from "./math.js";
