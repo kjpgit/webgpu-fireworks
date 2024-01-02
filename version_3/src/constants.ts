@@ -1,4 +1,4 @@
-// Galaxy Engine - Copyright (C) 2023 Karl Pickett
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 
 // These settings are designed to render 10K small shapes, regardless of if
 // they are distributed evenly across the screen, or if they are all stacked on

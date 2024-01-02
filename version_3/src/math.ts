@@ -1,4 +1,4 @@
-// Galaxy Engine - Copyright (C) 2023 Karl Pickett
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 
 import { Vector2, Vector3  } from "./util.js";
 

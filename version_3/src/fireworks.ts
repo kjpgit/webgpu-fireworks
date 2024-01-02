@@ -1,4 +1,4 @@
-// Galaxy Engine - Copyright (C) 2023 Karl Pickett
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 
 import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
