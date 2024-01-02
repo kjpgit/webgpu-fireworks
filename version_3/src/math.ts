@@ -71,7 +71,10 @@ points clustered at the poles)
 export function RandomUniformUnitVector3D(): Vector3 {
     const angle = random_range([0.0, 2.0 * PI])
     const r = Math.sqrt(my_random())
-    const hemisphere = random_choose(-1.0, 1.0)
+    var hemisphere = 1.0;
+    if (my_random() < 0.5) {
+        hemisphere = -1.0;
+    }
     const z = Math.sqrt(1.0 - r*r) * hemisphere
     return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
 }

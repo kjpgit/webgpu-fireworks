@@ -201,9 +201,10 @@ const init_webgpu = async (main: Main) => {
 
     const misc_buffer_gpu = device.createBuffer({
         label: "misc_buffer_gpu",
-        size: Math.max(constants.MISC_BUFFER_SIZE, 256000),
+        size: Math.max(constants.MISC_BUFFER_SIZE),
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
     });
+    console.log(constants.MISC_BUFFER_SIZE)
 
     const misc_buffer_cpu = device.createBuffer({
         label: "misc_buffer_cpu",

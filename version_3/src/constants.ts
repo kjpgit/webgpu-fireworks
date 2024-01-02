@@ -19,7 +19,7 @@ export const MAX_FINE_SHAPES      = 100000
 export const MAX_FINE_POINTERS    = MAX_FINE_SHAPES * 4  // can hold all tile overlaps
 
 export const UNIFORM_BUFFER_SIZE  = 8000
-export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864) + (MAX_FINE_POINTERS*4)   // ~ 2MB
+export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864) + (MAX_FINE_POINTERS*4) +4096  // ~ 2MB
 export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 64
 export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 32   // 3.2MB
 export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 4 * 4  // 18MB, VEC4 RGBA

@@ -1,7 +1,7 @@
 // Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 
 import * as constants from "./constants.js";
-import { BufferWrapper, Vector2, Color4  } from "./util.js";
+import { BufferWrapper, Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
 const PERFTEST_FRAME = 0
@@ -49,12 +49,12 @@ function get_random_color() : Color4 {
 // We record its initial parameters, so later we can (re)calculate position at
 // any point in time.  Note the entire struct is immutable.
 class Flare {
-    readonly velocity_vec: Vector2
+    readonly velocity_vec: Vector3
     readonly size: number
     readonly duration_secs: number
     readonly color: Color4
 
-    constructor(velocity_vec: Vector2, size: number, color: Color4,
+    constructor(velocity_vec: Vector3, size: number, color: Color4,
                 duration_secs: number) {
         this.velocity_vec = velocity_vec
         this.size = size
@@ -163,11 +163,11 @@ export class Scene
 
         this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
         this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector2(0.0, 0.0))
+                          new Vector3(0.0, 0.0, 0.0))
         this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector2(0.5, 0.0))
+                          new Vector3(0.5, 0.0, 0.0))
         this.draw_test_dot(new Vector2(0.5,0.2), 0.01, new Color4(0,1,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector2(1.0, 0.0))
+                          new Vector3(1.0, 0.0, 0.0))
 
         this.write_uniform(current_time)
     }
@@ -204,8 +204,13 @@ export class Scene
         for (const flare of fw.m_flares) {
             this.firework_wrapper.append_raw_f32(fw.pos.x)
             this.firework_wrapper.append_raw_f32(fw.pos.y)
+            this.firework_wrapper.append_raw_f32(0.5)
+            this.firework_wrapper.append_raw_f32(999)  // padding
+
             this.firework_wrapper.append_raw_f32(flare.velocity_vec.x)
             this.firework_wrapper.append_raw_f32(flare.velocity_vec.y)
+            this.firework_wrapper.append_raw_f32(flare.velocity_vec.z)
+            this.firework_wrapper.append_raw_f32(999)  // padding
 
             this.firework_wrapper.append_raw_f32(flare.size)
             this.firework_wrapper.append_raw_f32(fw.start_time)
@@ -284,18 +289,22 @@ export class Scene
 
 
     draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4,
-                  flags?: number, velocity?: Vector2) {
+                  flags?: number, velocity?: Vector3) {
         this.firework_wrapper.append_raw_f32(world_pos.x)
         this.firework_wrapper.append_raw_f32(world_pos.y)
-        this.firework_wrapper.append_raw_f32(0)
+        this.firework_wrapper.append_raw_f32(0.5)
+        this.firework_wrapper.append_raw_f32(999)  // padding
 
         if (velocity !== undefined) {
             this.firework_wrapper.append_raw_f32(velocity.x)
             this.firework_wrapper.append_raw_f32(velocity.y)
+            this.firework_wrapper.append_raw_f32(velocity.z)
         } else {
             this.firework_wrapper.append_raw_f32(0)
             this.firework_wrapper.append_raw_f32(0)
+            this.firework_wrapper.append_raw_f32(0)
         }
+        this.firework_wrapper.append_raw_f32(999)  // padding
 
         this.firework_wrapper.append_raw_f32(world_radius)
         this.firework_wrapper.append_raw_f32(0)    // start time
