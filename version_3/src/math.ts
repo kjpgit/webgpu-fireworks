@@ -1,3 +1,4 @@
+// Galaxy Engine - Copyright (C) 2023 Karl Pickett
 import { Vector2, Vector3  } from "./util.js";
 
 const PI = 3.1415926535
