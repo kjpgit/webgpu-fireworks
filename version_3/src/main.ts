@@ -50,20 +50,23 @@ class Main
     on_keydown(e: KeyboardEvent) {
         //console.log(`You pressed ${e.key}`)
         if (e.key == "f") { this.toggleFullScreen() }
-        if (e.key == " ") { this.scene_timer.toggle_pause() }
-        if (e.key == "j") {
+        else if (e.key == " ") { this.scene_timer.toggle_pause() }
+        else if (e.key == "j") {
             if (this.scene_timer.is_paused()) {
                 this.scene_timer.advance_pause_time(-1/60)
             }
         }
-        if (e.key == "k") {
+        else if (e.key == "k") {
             if (this.scene_timer.is_paused()) {
                 this.scene_timer.advance_pause_time(1/60)
             }
         }
-        if (e.key == "a") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
-        if (e.key == "h") { this.debug_show_histogram_next_frame = true }
-        if (e.key == "p") { this.debug_show_perf_lines = 5000 }
+        else if (e.key == "a") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+        else if (e.key == "h") { this.debug_show_histogram_next_frame = true }
+        else if (e.key == "p") { this.debug_show_perf_lines = 5000 }
+        else if (e.key == "1") { this.scene.scene_number = 1 }
+        else if (e.key == "2") { this.scene.scene_number = 2 }
+        else if (e.key == "3") { this.scene.scene_number = 3 }
     }
 
     on_double_click(event: Event) {
@@ -122,7 +125,10 @@ const init_webgpu = async (main: Main) => {
     const canvas = <HTMLCanvasElement> document.getElementById("canvas-container") ?? do_throw("no canvas");
     const context = canvas.getContext("webgpu") ?? do_throw("Canvas does not support WebGPU");
 
-    // Set internal rendering resolution
+    // Set internal rendering resolution, and also compensate for default page zoom
+    let dpr = window.devicePixelRatio || 1
+    canvas.style.width = `${constants.SCREEN_WIDTH_PX / dpr}px`
+    canvas.style.height = `${constants.SCREEN_HEIGHT_PX / dpr}px`
     canvas.width = constants.SCREEN_WIDTH_PX;
     canvas.height = constants.SCREEN_HEIGHT_PX;
     console.log(`internal rendering resolution is ${canvas.width} x ${canvas.height}`);

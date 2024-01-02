@@ -104,6 +104,7 @@ export class Scene
     private fireworks: Firework[] = new Array()
     private next_launch = 0
 
+    scene_number = 0
     debug_flags = 0
     uniform_wrapper = new BufferWrapper(constants.UNIFORM_BUFFER_SIZE)
     firework_wrapper = new BufferWrapper(constants.ROUGH_BUFFER_SIZE)
@@ -117,12 +118,12 @@ export class Scene
         this.uniform_wrapper.clear();
         this.firework_wrapper.clear();
 
-        if (PERFTEST_PAGE !== 0) {
-            if (PERFTEST_PAGE == 1) {
-                this.draw_test_page()
-            } else if (PERFTEST_PAGE == 2) {
-                this.draw_test_page2()
-            }
+        if (this.scene_number == 2) {
+            this.draw_test_page()
+            this.write_uniform(current_time)
+            return;
+        } else if (this.scene_number == 3) {
+            this.draw_test_page2()
             this.write_uniform(current_time)
             return;
         }
@@ -236,9 +237,8 @@ export class Scene
     draw_test_page() {
         for (var x = 0; x < 200; x++) {
             for (var y = 0; y < 50; y++) {
-                //let color = new Color4(0.0, 0.0, 0.0, 0.0);
-                let color = get_random_color();
-                /*
+                let color = new Color4(0.0, 0.0, 0.0, 0.0);
+                //let color = get_random_color();
                 color.b = 1;
                 if (x % 10 == 0) {
                     color.r = 1;
@@ -247,7 +247,6 @@ export class Scene
                     color.r = 0;
                     color.g = 1;
                 }
-               */
                 let wx = (x + 0.5) / 200
                 let wy = (y + 0.5) / 50
                 this.draw_test_dot(new Vector2(wx, wy), 0.0025, color)
