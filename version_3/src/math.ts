@@ -76,7 +76,8 @@ export function RandomUniformUnitVector3D(): Vector3 {
     if (my_random() < 0.5) {
         hemisphere = -1.0;
     }
-    const z = Math.sqrt(1.0 - r*r) * hemisphere
+    //const z = Math.sqrt(1.0 - r*r) * hemisphere
+    const z = 0;
     return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
 }
 

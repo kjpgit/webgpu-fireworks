@@ -37,7 +37,7 @@ export class Engine
         this.rough_wrapper.clear();
         this.current_time = current_time
         this.scene_list[this.scene_number].draw(this)
-        this.write_uniform(current_time)
+        this.write_uniform(this.current_time)  // let scene override the time
     }
 
     toggle_debug(flag: number) {

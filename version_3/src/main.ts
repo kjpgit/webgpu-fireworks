@@ -12,6 +12,7 @@ import { FragmentCode } from "./shaders/quad.wgsl.js"
 class Main
 {
     /* Troubleshooting */
+    debug_start_paused = true
     debug_max_frames = -1
     debug_max_perf_lines = 10000
     debug_show_histogram_next_frame = false
@@ -404,6 +405,11 @@ const init_webgpu = async (main: Main) => {
                 perf_gpu_end - perf_gpu_start                  // total gpu time, including screen render
             ]
             main.fps_monitor.add_frame_timing(frame_timing)
+
+            if (main.debug_start_paused) {
+                main.scene_timer.toggle_pause()
+                main.debug_start_paused = false
+            }
 
             main.num_frames += 1
             if (main.debug_max_frames === -1 || main.num_frames < main.debug_max_frames) {

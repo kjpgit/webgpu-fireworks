@@ -51,35 +51,30 @@ export class DebugScene2 implements Scene
     }
 }
 
-
 export class DebugScene3 implements Scene
 {
     // Trying galaxy orbit...
     draw(engine: Engine) {
-        // red center
-        draw_test_dot(engine, new Vector2(0.5,0.6), 0.01, new Color4(1,0,0,0))
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,0,0,0))
+        //engine.current_time = 0
 
-        //Yellow - no velocity
-        //this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
-                          //new Vector3(0.0, 0.0, 0.0))
+        // White - centers
+        draw_test_dot(engine, new Vector2(0.5,0.6), 0.01, new Color4(1,1,1,0))
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0))
 
-        // White - full x
+        // Red - full x
         let flags = constants.SHAPE_FLAG_ROTATE;
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), flags,
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,0,0,0), flags,
                           new Vector3(1.0, 0.0, 0.0))
-        // Green - full y
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(0,1,0,0), flags,
-                          new Vector3(0.0, 1.0, 0.0))
-        // blue - both x and y
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.003, new Color4(0,0,0.5,0), flags,
+
+        // Blue - negative x
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(0,0,1,0), flags,
+                          new Vector3(-1.0, 0.0, 0.0))
+
+        // Others - Mixed -
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,1,0,0), flags,
                           new Vector3(0.707, 0.707, 0.0))
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.003, new Color4(0,0,0.5,0), flags,
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(0,1,0.5,0), flags,
                           new Vector3(-0.707, 0.707, 0.0))
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,0,0.5,0), flags,
-                          new Vector3(-0.707, -0.707, 0.0))
-        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,1,0.5,0), flags,
-                          new Vector3(0.707, -0.707, 0.0))
     }
 }
 
