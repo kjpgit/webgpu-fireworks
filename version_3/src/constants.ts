@@ -101,7 +101,9 @@ struct FineIndex {
 // A basic particle.
 struct RoughShape {
     world_position: vec3<f32>,
+    padding: f32,
     world_velocity: vec3<f32>,
+    padding2: f32,
 
     world_size:    f32,
     start_time:    f32,
