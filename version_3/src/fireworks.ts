@@ -111,7 +111,7 @@ export class Scene
 
     constructor() { }
 
-    num_shapes() { return this.firework_wrapper.bytes_used / 48; }
+    num_shapes() { return this.firework_wrapper.bytes_used / constants.ROUGH_SHAPE_SIZE; }
 
     draw(current_time: number)
     {
@@ -158,7 +158,7 @@ export class Scene
         }
 
         for (const fw of this.fireworks) {
-            this.write_firework(fw)
+            //this.write_firework(fw)
         }
 
         this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
@@ -310,10 +310,8 @@ export class Scene
         this.firework_wrapper.append_raw_f32(0)    // start time
         this.firework_wrapper.append_raw_f32(999999)    // duration
         if (typeof flags !== "undefined") {
-            console.log("wtf defined:" + flags);
             this.firework_wrapper.append_raw_u32(flags)
         } else {
-            console.log("wtf2 undefined:" + flags);
             this.firework_wrapper.append_raw_u32(0)
         }
 
