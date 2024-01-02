@@ -11,13 +11,12 @@ ${constants.WGSL_INCLUDE}
 @group(0) @binding(3) var<storage, read_write>  g_fine_shapes: array<FineShape>;
 
 //
-// Each workgroup fully processes a single rough shape, which uses world space
+// (current) Each workgroup processes 128 rough shapes
+// (future) Each workgroup fully processes a single rough shape, which uses world space
 // coordinates 0.0 ... 1.0.   0,0 is bottom left.
 //
 // Each thread generates a portion of its fine shapes, writing them to viewport
 // coordinates 0.0 ... screen_px.  (0,0) is top left.
-//
-// TODO: Could we just... render to atomic memory here?
 //
 
 @compute @workgroup_size(WG_ROUGH_WORKLOAD)
@@ -46,10 +45,18 @@ fn rough_main(
 
     // Calculate physics and update world coordinates
     var world_position = shape.world_position;
-    world_position.x += get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
-    world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
-    if ((shape.flags & 0x01) == 0) {
+    if ((shape.flags & 0x04) != 0) {
+        world_position.x += get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
+        world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
+    }
+    if ((shape.flags & 0x01) != 0) {
         world_position.y += get_total_gravity_distance(elapsed_secs);
+    }
+    if ((shape.flags & 0x02) != 0) {
+        var angle = acos(shape.world_velocity.x) + elapsed_secs*3.0;
+        //let scale = elapsed_secs * shape.world_velocity.x * 0.1;  // ever expanding as well
+        let scale = 0.1;
+        world_position.x += cos(angle) * scale;
     }
 
     // The size is a world size, so it scales independently to height and width

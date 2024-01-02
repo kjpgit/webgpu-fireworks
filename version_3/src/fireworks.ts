@@ -8,14 +8,14 @@ const PERFTEST_FRAME = 0
 const PERFTEST_PAGE = 0
 
 
-const NUM_FLARES = 5000
-const MAX_FIREWORKS = 2
+const NUM_FLARES = 100
+const MAX_FIREWORKS = 1
 
-const LAUNCH_TIME_RANGE = [2.2, 3.0]
-const LAUNCH_RANGE_X = [0.2, 0.8]
-const LAUNCH_RANGE_Y = [0.5, 0.8]
+const LAUNCH_TIME_RANGE = [200.2, 300.0]
+const LAUNCH_RANGE_X = [0.5, 0.5]
+const LAUNCH_RANGE_Y = [0.8, 0.8]
 
-const FLARE_DURATION_RANGE = [1.0, 4.0]
+const FLARE_DURATION_RANGE = [100.0, 400.0]
 const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 
@@ -160,6 +160,15 @@ export class Scene
         for (const fw of this.fireworks) {
             this.write_firework(fw)
         }
+
+        this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
+        this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
+                          new Vector2(0.0, 0.0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), constants.SHAPE_FLAG_ROTATE,
+                          new Vector2(0.5, 0.0))
+        this.draw_test_dot(new Vector2(0.5,0.2), 0.01, new Color4(0,1,1,0), constants.SHAPE_FLAG_ROTATE,
+                          new Vector2(0.8, 0.0))
+
         this.write_uniform(current_time)
     }
 
@@ -201,7 +210,8 @@ export class Scene
             this.firework_wrapper.append_raw_f32(flare.size)
             this.firework_wrapper.append_raw_f32(fw.start_time)
             this.firework_wrapper.append_raw_f32(flare.duration_secs)
-            this.firework_wrapper.append_raw_f32(999)
+            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_ROTATE)
+            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_EXPLODE)
 
             this.firework_wrapper.append_raw_color4(flare.color)
         }
@@ -270,16 +280,22 @@ export class Scene
     }
 
 
-    draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4) {
+    draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4, flags: number=0,
+                 velocity: Vector2 | undefined = undefined) {
         this.firework_wrapper.append_raw_f32(world_pos.x)
         this.firework_wrapper.append_raw_f32(world_pos.y)
-        this.firework_wrapper.append_raw_f32(0)
-        this.firework_wrapper.append_raw_f32(0)
+        if (velocity !== undefined) {
+            this.firework_wrapper.append_raw_f32(velocity.x)
+            this.firework_wrapper.append_raw_f32(velocity.y)
+        } else {
+            this.firework_wrapper.append_raw_f32(0)
+            this.firework_wrapper.append_raw_f32(0)
+        }
 
         this.firework_wrapper.append_raw_f32(world_radius)
         this.firework_wrapper.append_raw_f32(0)    // start time
         this.firework_wrapper.append_raw_f32(999999)    // duration
-        this.firework_wrapper.append_raw_u32(0x01)  // nogravity
+        this.firework_wrapper.append_raw_u32(flags)  // nogravity
 
         this.firework_wrapper.append_raw_color4(color)
     }

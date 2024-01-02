@@ -28,6 +28,9 @@ export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
 export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
 export const WG_BIN2_WORKLOAD     = 32
 
+export const SHAPE_FLAG_GRAVITY  = 0x01
+export const SHAPE_FLAG_ROTATE   = 0x02
+export const SHAPE_FLAG_EXPLODE  = 0x04
 export const DEBUG_SHOW_ACTIVE_TILES = 0x01
 
 export const WGSL_INCLUDE = `
