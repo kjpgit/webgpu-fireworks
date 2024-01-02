@@ -84,7 +84,7 @@ fn fine_main(
     }
 
     let view_center = vec2<f32>(view_min.x+0.5, view_min.y+0.5);
-    let clear_color = vec3<f32>(0.0, 0.2, 0.0);
+    let clear_color = vec3<f32>(0.0, 0.1, 0.0);
     var final_color = clear_color;
 
     if (!PERFORMANCE_TEST_NOOOP) {

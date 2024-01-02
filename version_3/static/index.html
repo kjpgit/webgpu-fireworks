@@ -22,8 +22,13 @@
         src: url("./sharetech.ttf") format("truetype");
       }
 
-      html { margin: 0; padding: 0; height: 100%; background-color: #333333; }
-      body { margin: 0; padding: 0; padding-top: 50px; background-color: #333333; }
+      html { 
+        height: 100%; margin: 0; padding: 0; 
+      }
+      body { 
+        height: 100%; margin: 0; padding: 0; 
+        background: #222;
+      }
       .hidden { display: none; }
       canvas {
         display: block;
@@ -34,24 +39,35 @@
         //width: 100%;
         //height: 100%;
       }
-      .stand {
+      .stand, .stand2 {
         font-family: ShareTechMono;
-        width: 500px;
+        width: 400px;
+        font-size: 16px;
         background-color: black;
         color: silver;
         margin: 0 auto;
+        padding: 10px;
         text-align: center;
+      }
+      .stand2 {
+        width: 600px;
+        height: 10px;
+        padding: 0;
       }
     </style>
   </head>
 
   <body>
+    <div style="height: 50px"></div>
     <div id="error-message" class="hidden"></div>
+    <div>
     <canvas id="canvas-container"></canvas>
+    </div>
     <div class=stand>
       <div>Galaxy Engine</div>
       <div>by Karl Pickett</div>
     </div>
+    <div class=stand2>
     <script type="module" src="main.js"></script>
   </body>
 </html>
