@@ -78,7 +78,8 @@ class Firework {
         for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector3D()
             //let speed_variance = random_range([0.1, 0.4]);
-            let speed_variance = 0.3;
+            //let speed_variance = 0.3;
+            let speed_variance = 1.0;
 
             velocity.x *= speed_variance;
             velocity.y *= speed_variance;
