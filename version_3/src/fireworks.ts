@@ -144,9 +144,9 @@ export class FireworksScene implements Scene
             engine.rough_wrapper.append_raw_f32(fw.start_time)
             engine.rough_wrapper.append_raw_f32(flare.duration_secs)
             let flags = 0;
-            flags |= constants.SHAPE_FLAG_GRAVITY
+            //flags |= constants.SHAPE_FLAG_GRAVITY
             flags |= constants.SHAPE_FLAG_ROTATE
-            flags |= constants.SHAPE_FLAG_EXPLODE
+            //flags |= constants.SHAPE_FLAG_EXPLODE
             engine.rough_wrapper.append_raw_u32(flags)
 
             engine.rough_wrapper.append_raw_color4(flare.color)
