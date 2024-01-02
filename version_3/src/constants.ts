@@ -1,5 +1,3 @@
-// webgpu-fireworks Copyright (C) 2023 Karl Pickett
-// All rights reserved
 
 // These settings are designed to render 10K small shapes, regardless of if
 // they are distributed evenly across the screen, or if they are all stacked on
