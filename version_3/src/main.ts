@@ -1,8 +1,8 @@
 // Galaxy Engine - Copyright (C) 2023 Karl Pickett - All Rights Reserved
 
 import * as constants from "./constants.js"
-import { FPSMonitor, SceneTimer, BufferWrapper, do_throw } from "./util.js"
-import { Scene } from "./fireworks.js"
+import { BufferWrapper, do_throw } from "./util.js"
+import { FPSMonitor, SceneTimer, Engine } from "./engine.js"
 import { RoughCode } from "./shaders/rough.wgsl.js"
 import { FineCode } from "./shaders/fine.wgsl.js"
 import { BinCode } from "./shaders/bin.wgsl.js"
@@ -22,12 +22,12 @@ class Main
     is_fullscreen = false
     last_stats_time = 0
     num_frames = 0
-    scene: Scene
+    engine: Engine
     scene_timer: SceneTimer
     fps_monitor: FPSMonitor
 
     constructor() {
-        this.scene = new Scene()
+        this.engine = new Engine()
         this.scene_timer = new SceneTimer()
         this.fps_monitor = new FPSMonitor()
 
@@ -61,13 +61,13 @@ class Main
                 this.scene_timer.advance_pause_time(1/60)
             }
         }
-        else if (e.key == "a") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+        else if (e.key == "a") { this.engine.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
         else if (e.key == "h") { this.debug_show_histogram_next_frame = true }
         else if (e.key == "p") { this.debug_show_perf_lines = 5000 }
-        else if (e.key == "1") { this.scene.scene_number = 1 }
-        else if (e.key == "2") { this.scene.scene_number = 2 }
-        else if (e.key == "3") { this.scene.scene_number = 3 }
-        else if (e.key == "4") { this.scene.scene_number = 4 }
+        else if (e.key == "1") { this.engine.scene_number = 0 }
+        else if (e.key == "2") { this.engine.scene_number = 1 }
+        else if (e.key == "3") { this.engine.scene_number = 2 }
+        else if (e.key == "4") { this.engine.scene_number = 3 }
     }
 
     on_double_click(event: Event) {
@@ -289,7 +289,7 @@ const init_webgpu = async (main: Main) => {
     // --------------------------------
     async function frame(raw_elapsed_ms: DOMHighResTimeStamp, main: Main) {
         const raw_elapsed_secs = raw_elapsed_ms / 1000
-        const scene = main.scene
+        const engine = main.engine
         if (raw_elapsed_secs - main.last_stats_time > 1) {
             console.log(`[fps] frames:                 ${main.fps_monitor.frame_data.length}`)
             console.log(`[fps] cpu time:               ${main.fps_monitor.get_timing_info(0)}`);
@@ -305,36 +305,36 @@ const init_webgpu = async (main: Main) => {
         const perf_cpu_start = performance.now()
         main.scene_timer.set_raw_time(raw_elapsed_secs)
         const scene_time = main.scene_timer.get_scene_time()
-        scene.draw(scene_time);
-        main.log_perf(`cpu drawn shapes: ${scene.num_shapes()}`)
+        engine.draw(scene_time);
+        main.log_perf(`cpu drawn shapes: ${engine.num_shapes()}`)
         const perf_cpu_end = performance.now()
 
 
         // GPU Work Start -------------------------------------------------
         // Upload data and commands to GPU
         const perf_gpu_start = perf_cpu_end
-        main.log_perf(`uploading ${scene.uniform_wrapper.bytes_used}, ${scene.firework_wrapper.bytes_used}`)
-        device.queue.writeBuffer(uniform_buffer_gpu, 0, scene.uniform_wrapper.bytes, 0,
-                                 scene.uniform_wrapper.bytes_used)
-        device.queue.writeBuffer(rough_buffer_gpu, 0, scene.firework_wrapper.bytes, 0,
-                                 scene.firework_wrapper.bytes_used)
+        main.log_perf(`uploading ${engine.uniform_wrapper.bytes_used}, ${engine.rough_wrapper.bytes_used}`)
+        device.queue.writeBuffer(uniform_buffer_gpu, 0, engine.uniform_wrapper.bytes, 0,
+                                 engine.uniform_wrapper.bytes_used)
+        device.queue.writeBuffer(rough_buffer_gpu, 0, engine.rough_wrapper.bytes, 0,
+                                 engine.rough_wrapper.bytes_used)
         const encoder = device.createCommandEncoder();
         encoder.clearBuffer(misc_buffer_gpu);
 
         const computePass = encoder.beginComputePass()
 
         // Physics and fine shape generation pass
-        if (scene.num_shapes() > 0) {
+        if (engine.num_shapes() > 0) {
             computePass.setPipeline(rough_pipeline);
             computePass.setBindGroup(0, rough_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_ROUGH_WORKLOAD))
+            computePass.dispatchWorkgroups(Math.ceil(engine.num_shapes()/constants.WG_ROUGH_WORKLOAD))
         }
 
         // Binning / histogram pass
-        if (scene.num_shapes() > 0) {
+        if (engine.num_shapes() > 0) {
             computePass.setPipeline(bin_pipeline);
             computePass.setBindGroup(0, bin_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes() / constants.WG_BIN_WORKLOAD))
+            computePass.dispatchWorkgroups(Math.ceil(engine.num_shapes() / constants.WG_BIN_WORKLOAD))
 
             computePass.setPipeline(bin2_pipeline);
             computePass.setBindGroup(0, bin2_bg)
@@ -342,7 +342,7 @@ const init_webgpu = async (main: Main) => {
 
             computePass.setPipeline(bin3_pipeline);
             computePass.setBindGroup(0, bin3_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes() / constants.WG_BIN_WORKLOAD))
+            computePass.dispatchWorkgroups(Math.ceil(engine.num_shapes() / constants.WG_BIN_WORKLOAD))
         }
 
         // Rasterization pass
@@ -367,7 +367,7 @@ const init_webgpu = async (main: Main) => {
                 main.log_perf(`got results back and mapped`);
                 perf_compute_results_mapped = performance.now()
                 const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
-                console.log(`histogram ${scene.get_histogram(result)}`);
+                console.log(`histogram ${engine.get_histogram(result)}`);
                 main.debug_show_histogram_next_frame = false;
                 misc_buffer_cpu.unmap()
             })
