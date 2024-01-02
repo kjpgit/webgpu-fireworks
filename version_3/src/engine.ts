@@ -3,6 +3,9 @@
 import * as constants from "./constants.js";
 import { BufferWrapper } from "./util.js";
 import { FireworksScene } from "./fireworks.js";
+import { DebugScene1 } from "./debug.js";
+import { DebugScene2 } from "./debug.js";
+import { DebugScene3 } from "./debug.js";
 
 
 export interface Scene {
@@ -21,9 +24,9 @@ export class Engine
 
     constructor() {
         this.scene_list[0] = new FireworksScene()
-        //this.scene_list[1] = new DebugScene1()
-        //this.scene_list[2] = new DebugScene2()
-        //this.scene_list[3] = new DebugScene3()
+        this.scene_list[1] = new DebugScene1()
+        this.scene_list[2] = new DebugScene2()
+        this.scene_list[3] = new DebugScene3()
         //this.scene_list[4] = new DebugScene4()
     }
 
