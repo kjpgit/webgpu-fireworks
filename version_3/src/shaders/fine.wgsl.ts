@@ -112,8 +112,8 @@ fn fine_main(
                 let rough_check = min(rough_dist.x, rough_dist.y);
                 if (rough_check <= shape_size) {
                     let pdistance = length(rough_dist);
-                    let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
-                    //let ratio = 1.0 - step(shape_size, pdistance);
+                    //let ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
+                    let ratio = 1.0 - step(shape_size, pdistance);
 
                     // This check seems to have a tiny performance benefit
                     if (ratio > 0.0) {

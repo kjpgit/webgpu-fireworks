@@ -13,7 +13,7 @@ const MAX_FIREWORKS = 1
 
 const LAUNCH_TIME_RANGE = [200.2, 300.0]
 const LAUNCH_RANGE_X = [0.5, 0.5]
-const LAUNCH_RANGE_Y = [0.8, 0.8]
+const LAUNCH_RANGE_Y = [0.6, 0.6]
 
 const FLARE_DURATION_RANGE = [100.0, 400.0]
 const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
@@ -158,16 +158,28 @@ export class Scene
         }
 
         for (const fw of this.fireworks) {
-            //this.write_firework(fw)
+            this.write_firework(fw)
         }
 
-        this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
-        this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector3(0.0, 0.0, 0.0))
+        // red center
+        this.draw_test_dot(new Vector2(0.5,0.6), 0.01, new Color4(1,0,0,0))
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,0,0,0))
+
+        //Yellow - no velocity
+        //this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
+                          //new Vector3(0.0, 0.0, 0.0))
+
+        // White - full x
         this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector3(0.5, 0.0, 0.0))
-        this.draw_test_dot(new Vector2(0.5,0.2), 0.01, new Color4(0,1,1,0), constants.SHAPE_FLAG_ROTATE,
                           new Vector3(1.0, 0.0, 0.0))
+
+        // Green - full y
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(0,1,0,0), constants.SHAPE_FLAG_ROTATE,
+                          new Vector3(0.0, 1.0, 0.0))
+
+        // blue - both x and y
+        this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(0,0,1,0), constants.SHAPE_FLAG_ROTATE,
+                          new Vector3(0.707, 0.707, 0.0))
 
         this.write_uniform(current_time)
     }
