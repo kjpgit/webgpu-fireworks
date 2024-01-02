@@ -51,12 +51,8 @@ class Main
 
     on_keydown(e: KeyboardEvent) {
         //console.log(`You pressed ${e.key}`)
-        if (e.key == "f") {
-            this.toggleFullScreen()
-        }
-        if (e.key == " ") {
-            this.scene_timer.toggle_pause()
-        }
+        if (e.key == "f") { this.toggleFullScreen() }
+        if (e.key == " ") { this.scene_timer.toggle_pause() }
         if (e.key == "j") {
             if (this.scene_timer.is_paused()) {
                 this.scene_timer.advance_pause_time(-1/60)
@@ -67,6 +63,8 @@ class Main
                 this.scene_timer.advance_pause_time(1/60)
             }
         }
+        if (e.key == "z") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+
     }
 
     on_double_click(event: Event) {
@@ -264,6 +262,7 @@ const init_webgpu = async (main: Main) => {
         label: "fine_bg",
         layout: fine_pipeline.getBindGroupLayout(0),
         entries: [
+            { binding: 0, resource: { buffer: uniform_buffer_gpu } },
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
             { binding: 3, resource: { buffer: output_texture_gpu } },

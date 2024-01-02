@@ -6,10 +6,10 @@ import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
 const PERFTEST_FRAME = 0
-const PERFTEST_PAGE = 1
+const PERFTEST_PAGE = 0
 
 
-const NUM_FLARES = 1
+const NUM_FLARES = 1000
 const MAX_FIREWORKS = 2
 
 const LAUNCH_TIME_RANGE = [2.2, 3.0]
@@ -105,6 +105,7 @@ export class Scene
     private fireworks: Firework[] = new Array()
     private next_launch = 0
 
+    debug_flags = 0
     uniform_wrapper = new BufferWrapper(constants.UNIFORM_BUFFER_SIZE)
     firework_wrapper = new BufferWrapper(constants.ROUGH_BUFFER_SIZE)
 
@@ -162,6 +163,15 @@ export class Scene
         this.write_uniform(current_time)
     }
 
+    toggle_debug(flag: number) {
+        if ((this.debug_flags & flag) != 0) {
+            // already set, unset it
+            this.debug_flags &= ~flag;
+        } else {
+            this.debug_flags |= flag;
+        }
+    }
+
     private launch_firework(current_time: number) {
         const pos_x = random_range(LAUNCH_RANGE_X)
         const pos_y = random_range(LAUNCH_RANGE_Y)
@@ -176,7 +186,7 @@ export class Scene
 
     private write_uniform(current_time: number) {
         this.uniform_wrapper.append_raw_f32(current_time)
-        this.uniform_wrapper.append_raw_u32(0)
+        this.uniform_wrapper.append_raw_u32(this.debug_flags)
         this.uniform_wrapper.append_raw_u32(this.num_shapes())
         this.uniform_wrapper.set_min_size()
     }

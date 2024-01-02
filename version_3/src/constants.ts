@@ -29,6 +29,8 @@ export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
 export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
 export const WG_BIN2_WORKLOAD     = 32
 
+export const DEBUG_SHOW_ACTIVE_TILES = 0x01
+
 export const WGSL_INCLUDE = `
 
 ////////////////////////////////////////////////////////////
@@ -43,6 +45,8 @@ const MAX_FINE_POINTERS   = ${MAX_FINE_POINTERS};
 const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
 const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
 const WG_BIN2_WORKLOAD    = ${WG_BIN2_WORKLOAD};
+
+const DEBUG_SHOW_ACTIVE_TILES = ${DEBUG_SHOW_ACTIVE_TILES};
 ////////////////////////////////////////////////////////////
 
 
