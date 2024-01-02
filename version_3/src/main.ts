@@ -6,7 +6,6 @@ import { FPSMonitor, SceneTimer, BufferWrapper, do_throw } from "./util.js"
 import { Scene } from "./fireworks.js"
 import { ComputeCode } from "./compute.wgsl.js"
 import { RasterizeCode } from "./rasterize.wgsl.js"
-//import { RasterizeCode } from "./r2.wgsl.js"
 import { FragmentCode } from "./fragment.wgsl.js"
 import { BinCode } from "./bin.wgsl.js"
 
