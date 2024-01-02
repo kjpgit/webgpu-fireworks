@@ -4,7 +4,7 @@ import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const PERFTEST_FRAME = 1
+const PERFTEST_FRAME = 0
 const PERFTEST_PAGE = 0
 
 

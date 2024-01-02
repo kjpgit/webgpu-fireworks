@@ -17,6 +17,11 @@
     <title>Karl Pickett - Demo 3</title>
 
     <style>
+      @font-face {
+        font-family: "ShareTechMono";
+        src: url("./sharetech.ttf") format("truetype");
+      }
+
       html { margin: 0; padding: 0; height: 100%; background-color: #333333; }
       body { margin: 0; padding: 0; padding-top: 50px; background-color: #333333; }
       .hidden { display: none; }
@@ -29,12 +34,24 @@
         //width: 100%;
         //height: 100%;
       }
+      .stand {
+        font-family: ShareTechMono;
+        width: 500px;
+        background-color: black;
+        color: silver;
+        margin: 0 auto;
+        text-align: center;
+      }
     </style>
   </head>
 
   <body>
     <div id="error-message" class="hidden"></div>
     <canvas id="canvas-container"></canvas>
+    <div class=stand>
+      <div>Galaxy Engine</div>
+      <div>by Karl Pickett</div>
+    </div>
     <script type="module" src="main.js"></script>
   </body>
 </html>
