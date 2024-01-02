@@ -78,12 +78,10 @@ class Firework {
         for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector3D()
             //let speed_variance = random_range([0.1, 0.4]);
-            //let speed_variance = 0.3;
-            let speed_variance = 1.0;
-
-            velocity.x *= speed_variance;
-            velocity.y *= speed_variance;
-            velocity.z *= speed_variance;
+            //let speed_variance = 1.0;
+            //velocity.x *= speed_variance;
+            //velocity.y *= speed_variance;
+            //velocity.z *= speed_variance;
 
             // color variance
             let color = orig_color.clone()
@@ -153,7 +151,7 @@ export class FireworksScene implements Scene
             let flags = 0;
             flags |= constants.SHAPE_FLAG_GRAVITY
             flags |= constants.SHAPE_FLAG_ROTATE
-            flags |= constants.SHAPE_FLAG_EXPLODE
+            //flags |= constants.SHAPE_FLAG_EXPLODE
             engine.rough_wrapper.append_raw_u32(flags)
 
             engine.rough_wrapper.append_raw_color4(flare.color)

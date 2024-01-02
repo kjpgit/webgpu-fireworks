@@ -60,15 +60,7 @@ export function smoothstep(min:number, max:number, value:number) {
     return x * x * (3 - 2*x);
 }
 
-/*
-Return random 3D vector.  Length will be == 1.
-Source: gamedev.net
-This finds a random point on a solid circle (disc), than finds the height of
-the sphere at that point.  It can use the top or bottom hemisphere for z.  This
-gives better distribution than two random angles (which will produce more
-points clustered at the poles)
-*/
-export function RandomUniformUnitVector3D(): Vector3 {
+export function badRandomUniformUnitVector3D(): Vector3 {
     const angle = random_range([0.0, 2.0 * PI])
     const r = Math.sqrt(my_random())
     //const r = my_random()
@@ -79,4 +71,17 @@ export function RandomUniformUnitVector3D(): Vector3 {
     const z = Math.sqrt(1.0 - r*r) * hemisphere
     return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
 }
+
+export function RandomUniformUnitVector3D(): Vector3 {
+    let phi = random_range([0.0, 2.0 * PI])
+    let costheta = random_range([-1,1])
+
+    let theta = Math.acos( costheta )
+    let x = Math.sin( theta) * Math.cos( phi )
+    let y = Math.sin( theta) * Math.sin( phi )
+    let z = Math.cos( theta )
+    return new Vector3(x,y,z)
+
+}
+
 

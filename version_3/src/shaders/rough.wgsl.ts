@@ -57,8 +57,9 @@ fn rough_main(
 
     // Now apply movement from the velocity
     if ((shape.flags & SHAPE_FLAG_EXPLODE) != 0) {
-        world_position.x += get_total_explosion_distance(elapsed_secs, shape_velocity.x);
-        world_position.y += get_total_explosion_distance(elapsed_secs, shape_velocity.y);
+        let explosion_force = get_total_explosion_distance(elapsed_secs, 1.0);
+        shape_velocity *= explosion_force;
+        world_position += shape_velocity;
     } else {
         shape_velocity.x /= SCREEN_ASPECT;
         world_position += shape_velocity / 10;
