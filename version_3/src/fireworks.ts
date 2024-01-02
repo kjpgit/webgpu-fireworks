@@ -5,11 +5,11 @@ import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
 import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
 
-const PERFTEST_FRAME = 0
+const PERFTEST_FRAME = 1
 const PERFTEST_PAGE = 0
 
 
-const NUM_FLARES = 1000
+const NUM_FLARES = 5000
 const MAX_FIREWORKS = 2
 
 const LAUNCH_TIME_RANGE = [2.2, 3.0]
@@ -118,7 +118,7 @@ export class Scene
         this.uniform_wrapper.clear();
         this.firework_wrapper.clear();
 
-        if (PERFTEST_PAGE > 0) {
+        if (PERFTEST_PAGE !== 0) {
             if (PERFTEST_PAGE == 1) {
                 this.draw_test_page()
             } else if (PERFTEST_PAGE == 2) {
@@ -138,7 +138,7 @@ export class Scene
                     pos = new Vector2(0.10, 0.9)
                     fw = new Firework(0, pos, NUM_FLARES)
                     //fw = new Firework(48/60, pos, NUM_FLARES)
-                    //this.fireworks.push(fw)
+                    this.fireworks.push(fw)
 
                     pos = new Vector2(0.5, 0.5)
                     fw = new Firework(0, pos, NUM_FLARES)

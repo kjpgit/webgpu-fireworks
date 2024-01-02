@@ -33,6 +33,7 @@ ${constants.WGSL_INCLUDE}
 
 
 const PERFORMANCE_TEST_NOOOP      = false;
+const PERFORMANCE_TEST_HEATMAP    = false;
 const PERFORMANCE_TEST_MONOCHROME = false;
 
 

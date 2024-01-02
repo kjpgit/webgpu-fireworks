@@ -15,8 +15,8 @@ class Main
 {
     /* Troubleshooting */
     debug_max_frames = -1
-    debug_show_histogram = true
     debug_max_perf_lines = 10000
+    debug_show_histogram_next_frame = false
 
 
     /* Internals */
@@ -64,14 +64,13 @@ class Main
             }
         }
         if (e.key == "z") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
-
+        if (e.key == "x") { this.debug_show_histogram_next_frame = true }
     }
 
     on_double_click(event: Event) {
         console.log("doubleclick")
         this.toggleFullScreen()
     }
-
 
     toggleFullScreen() {
         if (this.is_fullscreen) {
@@ -348,22 +347,24 @@ const init_webgpu = async (main: Main) => {
 
         computePass.end();
 
-        // Copy the histogram results to CPU, ASAP!
-        encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, 4096)
+        if (main.debug_show_histogram_next_frame) {
+            encoder.copyBufferToBuffer(misc_buffer_gpu, 0, misc_buffer_cpu, 0, 32000)
+        }
 
-        device.queue.submit([encoder.finish()]);
         main.log_perf(`queue submitted`);
+        device.queue.submit([encoder.finish()]);
 
-        let perf_compute_results_mapped = -1
-        misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
-            main.log_perf(`got results back and mapped`);
-            perf_compute_results_mapped = performance.now()
-            const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
-            if (main.debug_show_histogram) {
+        let perf_compute_results_mapped = NaN
+        if (main.debug_show_histogram_next_frame) {
+            misc_buffer_cpu.mapAsync(GPUMapMode.READ).then(() => {
+                main.log_perf(`got results back and mapped`);
+                perf_compute_results_mapped = performance.now()
+                const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
                 main.log_perf(`histogram ${scene.get_histogram(result)}`);
-            }
-            misc_buffer_cpu.unmap()
-        }) // mapAsync callback end
+                main.debug_show_histogram_next_frame = false;
+                misc_buffer_cpu.unmap()
+            })
+        }
 
 
         // GPU Work Start 2 -- Draw fullscreen quad to screen ------------
