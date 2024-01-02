@@ -34,6 +34,7 @@ export const SHAPE_FLAG_GRAVITY  = 0x01
 export const SHAPE_FLAG_ROTATE   = 0x02
 export const SHAPE_FLAG_EXPLODE  = 0x04
 export const DEBUG_SHOW_ACTIVE_TILES = 0x01
+export const DEBUG_NO_SMOOTHSTEP   = 0x02
 
 export const WGSL_INCLUDE = `
 
@@ -56,6 +57,7 @@ const SHAPE_FLAG_EXPLODE  = ${SHAPE_FLAG_EXPLODE};
 const SHAPE_FLAG_ROTATE   = ${SHAPE_FLAG_ROTATE};
 
 const DEBUG_SHOW_ACTIVE_TILES = ${DEBUG_SHOW_ACTIVE_TILES};
+const DEBUG_NO_SMOOTHSTEP = ${DEBUG_NO_SMOOTHSTEP};
 ////////////////////////////////////////////////////////////
 
 
@@ -91,8 +93,6 @@ struct MiscDataRead {
     @align(4096) tile_shape_index: array<array<FineIndex, NUM_TILES_X>, NUM_TILES_Y>,
     @align(4096) tile_shape_pointers: array<i32, MAX_FINE_POINTERS>,
 };
-
-
 
 struct FineIndex {
     offset: i32,

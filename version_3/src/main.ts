@@ -64,6 +64,7 @@ class Main
             }
         }
         else if (e.key == "a") { this.engine.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+        else if (e.key == "s") { this.engine.toggle_debug(constants.DEBUG_NO_SMOOTHSTEP) }
         else if (e.key == "h") { this.debug_show_histogram_next_frame = true }
         else if (e.key == "p") { this.debug_show_perf_lines = 5000 }
         else if (e.key == "1") { this.engine.scene_number = 0 }

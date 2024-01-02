@@ -5,7 +5,7 @@ import { type Scene, Engine } from "./engine.js";
 import { Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
-const NUM_FLARES = 100
+const NUM_FLARES = 4000
 const MAX_FIREWORKS = 2
 
 const LAUNCH_TIME_RANGE = [2.2, 3.0]
@@ -77,6 +77,12 @@ class Firework {
         let orig_color = get_random_color()
         for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector3D()
+            //let speed_variance = random_range([0.1, 0.4]);
+            let speed_variance = 0.3;
+
+            velocity.x *= speed_variance;
+            velocity.y *= speed_variance;
+            velocity.z *= speed_variance;
 
             // color variance
             let color = orig_color.clone()
@@ -144,9 +150,9 @@ export class FireworksScene implements Scene
             engine.rough_wrapper.append_raw_f32(fw.start_time)
             engine.rough_wrapper.append_raw_f32(flare.duration_secs)
             let flags = 0;
-            //flags |= constants.SHAPE_FLAG_GRAVITY
+            flags |= constants.SHAPE_FLAG_GRAVITY
             flags |= constants.SHAPE_FLAG_ROTATE
-            //flags |= constants.SHAPE_FLAG_EXPLODE
+            flags |= constants.SHAPE_FLAG_EXPLODE
             engine.rough_wrapper.append_raw_u32(flags)
 
             engine.rough_wrapper.append_raw_color4(flare.color)
