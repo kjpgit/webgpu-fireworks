@@ -49,10 +49,8 @@ fn rough_main(
 
     // First, we apply rotation to the velocity
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
-        let unit_rotation_x = sin(elapsed_secs * 4.0);
-        let unit_rotation_y = cos(elapsed_secs * 0.7);
-        shape_velocity.x *= unit_rotation_x / SCREEN_ASPECT;
-        shape_velocity.y *= unit_rotation_y;
+        let angle = elapsed_secs * 2.0;
+        shape_velocity = rotate_vector(shape_velocity, angle).xyz;
     }
 
     // Now apply movement from the velocity
@@ -122,5 +120,20 @@ fn get_total_gravity_distance(elapsed_secs: f32) -> f32
     }
 }
 
+
+fn rotate_vector(input: vec3<f32>, angle: f32) -> vec4<f32>
+{
+    let input2 = vec4<f32>(input.xyz, 1);
+    let s = sin(angle);
+    let c = cos(angle);
+    let mat = mat4x4f(
+      1, 0, 0, 0,
+      0, c, s, 0,
+      0, -s, c, 0,
+      0, 0, 0, 1,
+    );
+    let ret = input2 * mat;
+    return ret;
+}
 
 `;

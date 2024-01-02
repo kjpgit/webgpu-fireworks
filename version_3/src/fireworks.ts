@@ -132,7 +132,7 @@ export class FireworksScene implements Scene
         for (const flare of fw.m_flares) {
             engine.rough_wrapper.append_raw_f32(fw.pos.x)
             engine.rough_wrapper.append_raw_f32(fw.pos.y)
-            engine.rough_wrapper.append_raw_f32(0.5)
+            engine.rough_wrapper.append_raw_f32(0.5) // z
             engine.rough_wrapper.append_raw_f32(999)  // padding
 
             engine.rough_wrapper.append_raw_f32(flare.velocity_vec.x)
