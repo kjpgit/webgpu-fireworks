@@ -22,28 +22,15 @@ fn bin_main(
     let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
     let workgroup_start_idx = i32(workgroup_id.x * WG_BIN_WORKLOAD);
     let workgroup_end_idx = i32(min(workgroup_start_idx + WG_BIN_WORKLOAD, total_shapes));
-    let ts = local_invocation_id.x;  // thread stride
+    let ts = i32(local_invocation_id.x);  // thread stride
 
     for (var i = workgroup_start_idx + ts; i < workgroup_end_idx; i += WG_THREADS_X) {
         // Find which cells are overlapped
-        let shape_vpos = g_fine_shapes[i].view_position;
-        let shape_vsize = g_fine_shapes[i].view_size_x;
+        let info = get_containing_tiles(g_fine_shapes[i]);
 
-        // Mark cols from [pos-size .. pos+size]
-        var start_col = i32(floor((shape_vpos.x - shape_vsize) * NUM_TILES_X / SCREEN_WIDTH_PX));
-        var end_col = i32(ceil((shape_vpos.x + shape_vsize) * NUM_TILES_X / SCREEN_WIDTH_PX));
-
-        var start_row = i32(floor((shape_vpos.y - shape_vsize) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
-        var end_row = i32(ceil((shape_vpos.y + shape_vsize) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
-
-        start_col = max(start_col, 0);
-        start_row = max(start_row, 0);
-        end_col = min(end_col, NUM_TILES_X);
-        end_row = min(end_row, NUM_TILES_Y);
-
-        for (var y = start_row; y < end_row; y++) {
-            for (var x = start_col; x < end_col; x++) {
-                atomicAdd(&g_misc.histogram[y][x], 1);
+        for (var y = info.start_row; y < info.end_row; y++) {
+            for (var x = info.start_col; x < info.end_col; x++) {
+                atomicAdd(&g_misc.num_shapes_per_tile[y][x], 1);
             }
         }
     }
@@ -60,12 +47,12 @@ fn bin_main2(
     // Dispatch will be 4480 / 32 = 140.0 WGs
 
     let workgroup_start_idx = i32(workgroup_id.x * WG_BIN2_WORKLOAD);
-    let my_tile_id = workgroup_start_idx + local_invocation_id.x;  // thread stride
+    let my_tile_id = workgroup_start_idx + i32(local_invocation_id.x);  // thread stride
 
     let x = i32(my_tile_id % NUM_TILES_X);
     let y = i32(my_tile_id / NUM_TILES_X);
 
-    let num_pointers = atomicLoad(&g_misc.histogram[y][x]);
+    let num_pointers = atomicLoad(&g_misc.num_shapes_per_tile[y][x]);
 
     // Allocate contiguous memory chunk
     let pointers_start = atomicAdd(&g_misc.num_fine_pointers, num_pointers);
@@ -75,10 +62,10 @@ fn bin_main2(
 
     // This is a duplicate of ths histogram, but whatever.
     // We don't need to re-mark the atomic memory as read-only
-    g_misc.tile_shape_index[y][x].num_pointers = num_pointers;
+    g_misc.tile_shape_index[y][x].length = num_pointers;
 
     // Clear this counter so step 3 can use it
-    atomicStore(&g_misc.histogram[y][x], 0);
+    atomicStore(&g_misc.num_shapes_per_tile[y][x], 0);
 }
 
 
@@ -95,7 +82,7 @@ fn bin_main3(
     let total_shapes = atomicLoad(&g_misc.num_fine_shapes);
     let workgroup_start_idx = i32(workgroup_id.x * WG_BIN_WORKLOAD);
     let workgroup_end_idx = i32(min(workgroup_start_idx + WG_BIN_WORKLOAD, total_shapes));
-    let ts = local_invocation_id.x;  // thread stride
+    let ts = i32(local_invocation_id.x);  // thread stride
 
     for (var i = workgroup_start_idx + ts; i < workgroup_end_idx; i += WG_THREADS_X) {
         // Find which cells are overlapped
@@ -105,7 +92,7 @@ fn bin_main3(
             for (var x = info.start_col; x < info.end_col; x++) {
                 // We already have the base pointer address allocated and stored
                 let bucket_start = g_misc.tile_shape_index[y][x].offset;
-                let offset = atomicAdd(&g_misc.histogram[y][x], 1);
+                let offset = atomicAdd(&g_misc.num_shapes_per_tile[y][x], 1);
                 g_misc.tile_shape_pointers[bucket_start + offset] = i;
             }
         }
@@ -113,29 +100,33 @@ fn bin_main3(
 }
 
 
-fn get_containing_tiles(FineShape shape, view_pos pos) -> FineShapeOverlap
+fn get_containing_tiles(shape: FineShape) -> FineShapeOverlap
 {
     var ret: FineShapeOverlap;
 
-    // Mark cols from [pos-size .. pos+size]
-    ret.start_col = i32(floor((shape.view_position.x - shape.view_position) * NUM_TILES_X / SCREEN_WIDTH_PX));
-    ret.end_col = i32(ceil((shape.view_position.x + shape.view_position) * NUM_TILES_X / SCREEN_WIDTH_PX));
+    let shape_vpos = shape.view_position;
+    let shape_vsize = shape.view_size_x;
 
-    ret.start_row = i32(floor((shape.view_position.y - shape.view_position) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
-    ret.end_row = i32(ceil((shape.view_position.y + shape.view_position) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
+    // Mark cols from [pos-size .. pos+size]
+    ret.start_col = i32(floor((shape_vpos.x - shape_vsize) * NUM_TILES_X / SCREEN_WIDTH_PX));
+    ret.end_col = i32(ceil((shape_vpos.x + shape_vsize) * NUM_TILES_X / SCREEN_WIDTH_PX));
+
+    ret.start_row = i32(floor((shape_vpos.y - shape_vsize) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
+    ret.end_row = i32(ceil((shape_vpos.y + shape_vsize) * NUM_TILES_Y / SCREEN_HEIGHT_PX));
 
     ret.start_col = max(ret.start_col, 0);
     ret.start_row = max(ret.start_row, 0);
     ret.end_col = min(ret.end_col, NUM_TILES_X);
     ret.end_row = min(ret.end_row, NUM_TILES_Y);
+
     return ret;
 }
 
 struct FineShapeOverlap {
-    i32 start_col,
-    i32 end_col,
-    i32 start_row,
-    i32 end_row,
+    start_col: i32,
+    end_col: i32,
+    start_row: i32,
+    end_row: i32,
 };
 
 

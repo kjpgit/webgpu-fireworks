@@ -146,6 +146,12 @@ const init_webgpu = async (main: Main) => {
     const bin_module = device.createShaderModule({
         label: 'bin_module', code: BinCode,
     });
+    const bin2_module = device.createShaderModule({
+        label: 'bin2_module', code: BinCode,
+    });
+    const bin3_module = device.createShaderModule({
+        label: 'bin3_module', code: BinCode,
+    });
     const fine_module = device.createShaderModule({
         label: 'fine_module', code: RasterizeCode,
     });
@@ -209,12 +215,6 @@ const init_webgpu = async (main: Main) => {
         usage: GPUBufferUsage.STORAGE,
     });
 
-    const fine_idx_buffer_gpu = device.createBuffer({
-        label: "fine_idx_buffer_gpu",
-        size: constants.POINTER_BUFFER_SIZE,
-        usage: GPUBufferUsage.STORAGE,
-    });
-
     const output_texture_gpu = device.createBuffer({
         label: "output_texture_gpu",
         size: constants.TEXTURE_BUFFER_SIZE,
@@ -242,7 +242,6 @@ const init_webgpu = async (main: Main) => {
             //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
-            { binding: 3, resource: { buffer: fine_idx_buffer_gpu } },
         ],
     });
 
@@ -254,7 +253,6 @@ const init_webgpu = async (main: Main) => {
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
             { binding: 3, resource: { buffer: output_texture_gpu } },
-            { binding: 4, resource: { buffer: fine_idx_buffer_gpu } },
         ],
     });
 

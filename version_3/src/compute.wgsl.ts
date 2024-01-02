@@ -27,7 +27,7 @@ fn rough_main(
     @builtin(local_invocation_id) local_invocation_id : vec3<u32>,
 )
 {
-    let rough_shape_index = workgroup_id.x * WG_ROUGH_WORKLOAD + local_invocation_id.x;
+    let rough_shape_index = i32(workgroup_id.x * WG_ROUGH_WORKLOAD + local_invocation_id.x);
     if (rough_shape_index >= g_uniform.num_rough_shapes) {
         return;
     }
@@ -77,7 +77,7 @@ fn rough_main(
     g_fine_shapes[shape_index].view_position.x = view_x;
     g_fine_shapes[shape_index].view_position.y = view_y;
     g_fine_shapes[shape_index].view_size_x = view_size_x;
-    g_fine_shapes[shape_index].packed_color = pack4x8unorm(shape.color * color_ratio);
+    g_fine_shapes[shape_index].color = shape.color.rgb * color_ratio;
 
     // We could also update histogram, but lets not do too much in this shader,
     // so we can profile it easier.

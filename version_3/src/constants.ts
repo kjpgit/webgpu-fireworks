@@ -39,9 +39,10 @@ const TILE_SIZE_X         = ${TILE_SIZE_X};
 const TILE_SIZE_Y         = ${TILE_SIZE_Y};
 const NUM_TILES_X         = ${NUM_TILES_X};
 const NUM_TILES_Y         = ${NUM_TILES_Y};
-//const MAX_FINE_SHAPES     = ${MAX_FINE_SHAPES};
+const MAX_FINE_POINTERS   = ${MAX_FINE_POINTERS};
 const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
 const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
+const WG_BIN2_WORKLOAD    = ${WG_BIN2_WORKLOAD};
 ////////////////////////////////////////////////////////////
 
 
@@ -64,14 +65,25 @@ struct MiscData {
 
     // This populated during binning step 2
     // It is read by the fine rasterizer
-    @align(4096) tile_shape_index: array<array<FineIndex>, NUM_TILES_X>, NUM_TILES_Y>,
+    @align(4096) tile_shape_index: array<array<FineIndex, NUM_TILES_X>, NUM_TILES_Y>,
 
-    @align(4096) tile_shape_pointers: array<u32, MAX_FINE_POINTERS>,
+    @align(4096) tile_shape_pointers: array<i32, MAX_FINE_POINTERS>,
 };
 
+
+struct MiscDataRead {
+    num_fine_shapes: i32,
+    num_fine_pointers: i32,
+    @align(4096) num_shapes_per_tile: array<array<i32, NUM_TILES_X>, NUM_TILES_Y>,
+    @align(4096) tile_shape_index: array<array<FineIndex, NUM_TILES_X>, NUM_TILES_Y>,
+    @align(4096) tile_shape_pointers: array<i32, MAX_FINE_POINTERS>,
+};
+
+
+
 struct FineIndex {
-    i32 offset,
-    i32 length,
+    offset: i32,
+    length: i32,
 };
 
 

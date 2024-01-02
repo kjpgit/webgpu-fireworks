@@ -7,12 +7,10 @@ export var RasterizeCode = `
 ${constants.WGSL_INCLUDE}
 
 
-//@group(0) @binding(0) var<uniform>              g_uniform: UniformData;
-//@group(0) @binding(1) var<storage, read_write>    g_misc: MiscData;
+//@group(0) @binding(0) var<uniform>            g_uniform: UniformData;
 @group(0) @binding(1) var<storage, read>        g_misc: MiscDataRead;
 @group(0) @binding(2) var<storage, read>        g_fine_shapes: array<FineShape>;
 @group(0) @binding(3) var<storage, read_write>  g_color_buffer: array<vec3<f32>>;
-@group(0) @binding(4) var<storage, read>  g_fine_shapes_index: array<array<u32, MAX_FINE_SHAPES>, TILES_Y>;
 
 
 // Testing with 40k x2 locked frame (GPU avg ms)
