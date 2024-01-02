@@ -45,8 +45,10 @@ fn rough_main(
 
     // Calculate physics and update world coordinates
     var world_position = shape.world_position;
+    var explosion_distance_x = 0.0;
     if ((shape.flags & 0x04) != 0) {
-        world_position.x += get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
+        explosion_distance_x = get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
+        world_position.x += explosion_distance_x;
         world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
     }
     if ((shape.flags & 0x01) != 0) {
@@ -54,9 +56,11 @@ fn rough_main(
     }
     if ((shape.flags & 0x02) != 0) {
         var angle = acos(shape.world_velocity.x) + elapsed_secs*3.0;
-        //let scale = elapsed_secs * shape.world_velocity.x * 0.1;  // ever expanding as well
-        let scale = 0.1;
-        //world_position.x += cos(angle) * scale;
+        var scale = 0.1;
+        if (explosion_distance_x != 0.0) {
+            scale = explosion_distance_x * 0.1;
+        }
+        world_position.x += cos(angle) * scale;
     }
 
     // The size is a world size, so it scales independently to height and width

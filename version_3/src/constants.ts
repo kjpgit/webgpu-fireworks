@@ -14,15 +14,15 @@ export const NUM_TILES_X          = 112
 export const NUM_TILES_Y          = 40
 export const NUM_TILES_TOTAL      = 4480
 
-export const MAX_ROUGH_SHAPES     = 10000
-export const MAX_FINE_SHAPES      = 10000   // 160KB to hold every fine shape
-export const MAX_FINE_POINTERS    = MAX_ROUGH_SHAPES * 4  // can hold all tile overlaps
+export const MAX_ROUGH_SHAPES     = 100000
+export const MAX_FINE_SHAPES      = 100000
+export const MAX_FINE_POINTERS    = MAX_FINE_SHAPES * 4  // can hold all tile overlaps
 
 export const UNIFORM_BUFFER_SIZE  = 8000
-export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864) + (MAX_FINE_POINTERS*4)
-export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 48  // 480KB
-export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 32   // 320KB
-export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 16  // 18MB
+export const MISC_BUFFER_SIZE     = 4096 + (20480) + (36864) + (MAX_FINE_POINTERS*4)   // ~ 2MB
+export const ROUGH_BUFFER_SIZE    = MAX_ROUGH_SHAPES * 64
+export const FINE_BUFFER_SIZE     = MAX_FINE_SHAPES * 32   // 3.2MB
+export const TEXTURE_BUFFER_SIZE  = SCREEN_WIDTH_PX * SCREEN_HEIGHT_PX * 4 * 4  // 18MB, VEC4 RGBA
 
 export const WG_ROUGH_WORKLOAD    = 128  // Rough shapes processed per WG
 export const WG_BIN_WORKLOAD      = 128  // Fine shapes processed per WG
@@ -47,6 +47,10 @@ const MAX_FINE_POINTERS   = ${MAX_FINE_POINTERS};
 const WG_ROUGH_WORKLOAD   = ${WG_ROUGH_WORKLOAD};
 const WG_BIN_WORKLOAD     = ${WG_BIN_WORKLOAD};
 const WG_BIN2_WORKLOAD    = ${WG_BIN2_WORKLOAD};
+
+const SHAPE_FLAG_GRAVITY  = ${SHAPE_FLAG_GRAVITY};
+const SHAPE_FLAG_EXPLODE  = ${SHAPE_FLAG_EXPLODE};
+const SHAPE_FLAG_ROTATE   = ${SHAPE_FLAG_ROTATE};
 
 const DEBUG_SHOW_ACTIVE_TILES = ${DEBUG_SHOW_ACTIVE_TILES};
 ////////////////////////////////////////////////////////////
@@ -95,8 +99,8 @@ struct FineIndex {
 
 // A basic particle.
 struct RoughShape {
-    world_position: vec2<f32>,
-    world_velocity: vec2<f32>,
+    world_position: vec3<f32>,
+    world_velocity: vec3<f32>,
 
     world_size:    f32,
     start_time:    f32,

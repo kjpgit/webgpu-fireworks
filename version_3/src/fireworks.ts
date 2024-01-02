@@ -2,7 +2,7 @@
 
 import * as constants from "./constants.js";
 import { BufferWrapper, Vector2, Color4  } from "./util.js";
-import { RandomUniformUnitVector2D, smoothstep, random_range } from "./math.js";
+import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
 const PERFTEST_FRAME = 0
 const PERFTEST_PAGE = 0
@@ -79,7 +79,7 @@ class Firework {
     add_flares(num_flares: number) {
         let orig_color = get_random_color()
         for (let i = 0; i < num_flares; i++) {
-            let velocity = RandomUniformUnitVector2D()
+            let velocity = RandomUniformUnitVector3D()
 
             // color variance
             let color = orig_color.clone()
@@ -161,16 +161,13 @@ export class Scene
             this.write_firework(fw)
         }
 
-        /*
-
         this.draw_test_dot(new Vector2(0.5,0.5), 0.01, new Color4(1,0,0,0))
         this.draw_test_dot(new Vector2(0.5,0.4), 0.01, new Color4(1,1,0,0), constants.SHAPE_FLAG_ROTATE,
                           new Vector2(0.0, 0.0))
         this.draw_test_dot(new Vector2(0.5,0.3), 0.01, new Color4(1,1,1,0), constants.SHAPE_FLAG_ROTATE,
                           new Vector2(0.5, 0.0))
         this.draw_test_dot(new Vector2(0.5,0.2), 0.01, new Color4(0,1,1,0), constants.SHAPE_FLAG_ROTATE,
-                          new Vector2(0.8, 0.0))
-                         */
+                          new Vector2(1.0, 0.0))
 
         this.write_uniform(current_time)
     }
@@ -213,9 +210,11 @@ export class Scene
             this.firework_wrapper.append_raw_f32(flare.size)
             this.firework_wrapper.append_raw_f32(fw.start_time)
             this.firework_wrapper.append_raw_f32(flare.duration_secs)
-            this.firework_wrapper.append_raw_f32(constants.SHAPE_FLAG_GRAVITY |
-                                                 constants.SHAPE_FLAG_ROTATE |
-                                                 constants.SHAPE_FLAG_EXPLODE)
+            let flags = 0;
+            //flags |= constants.SHAPE_FLAG_GRAVITY
+            flags |= constants.SHAPE_FLAG_ROTATE
+            flags |= constants.SHAPE_FLAG_EXPLODE
+            this.firework_wrapper.append_raw_u32(flags)
 
             this.firework_wrapper.append_raw_color4(flare.color)
         }
@@ -284,10 +283,12 @@ export class Scene
     }
 
 
-    draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4, flags: number=0,
-                 velocity: Vector2 | undefined = undefined) {
+    draw_test_dot(world_pos: Vector2, world_radius: number, color: Color4,
+                  flags?: number, velocity?: Vector2) {
         this.firework_wrapper.append_raw_f32(world_pos.x)
         this.firework_wrapper.append_raw_f32(world_pos.y)
+        this.firework_wrapper.append_raw_f32(0)
+
         if (velocity !== undefined) {
             this.firework_wrapper.append_raw_f32(velocity.x)
             this.firework_wrapper.append_raw_f32(velocity.y)
@@ -299,7 +300,13 @@ export class Scene
         this.firework_wrapper.append_raw_f32(world_radius)
         this.firework_wrapper.append_raw_f32(0)    // start time
         this.firework_wrapper.append_raw_f32(999999)    // duration
-        this.firework_wrapper.append_raw_u32(flags)  // nogravity
+        if (typeof flags !== "undefined") {
+            console.log("wtf defined:" + flags);
+            this.firework_wrapper.append_raw_u32(flags)
+        } else {
+            console.log("wtf2 undefined:" + flags);
+            this.firework_wrapper.append_raw_u32(0)
+        }
 
         this.firework_wrapper.append_raw_color4(color)
     }
