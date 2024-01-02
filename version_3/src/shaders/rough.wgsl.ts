@@ -50,7 +50,9 @@ fn rough_main(
     // First, we apply rotation to the velocity
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
         let angle = elapsed_secs * 2.0;
-        shape_velocity = rotate_vector_y(shape_velocity, angle).xyz;
+        shape_velocity = rotate_vector_x(shape_velocity, angle).xyz;
+        shape_velocity = rotate_vector_y(shape_velocity, 0.785).xyz;
+        shape_velocity *= 2;
     }
 
     // Now apply movement from the velocity

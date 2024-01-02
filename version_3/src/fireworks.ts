@@ -6,13 +6,13 @@ import { Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
 const NUM_FLARES = 100
-const MAX_FIREWORKS = 1
+const MAX_FIREWORKS = 2
 
-const LAUNCH_TIME_RANGE = [200.2, 300.0]
+const LAUNCH_TIME_RANGE = [2.2, 3.0]
 const LAUNCH_RANGE_X = [0.5, 0.5]
 const LAUNCH_RANGE_Y = [0.6, 0.6]
 
-const FLARE_DURATION_RANGE = [100.0, 400.0]
+const FLARE_DURATION_RANGE = [3.0, 4.0]
 const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 
