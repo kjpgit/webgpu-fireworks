@@ -15,12 +15,12 @@ class Main
     debug_max_frames = -1
     debug_max_perf_lines = 10000
     debug_show_histogram_next_frame = false
+    debug_show_perf_lines = 0
 
 
     /* Internals */
     is_fullscreen = false
     last_stats_time = 0
-    num_perf_lines = 0
     num_frames = 0
     scene: Scene
     scene_timer: SceneTimer
@@ -41,9 +41,9 @@ class Main
     }
 
     log_perf(msg: string) {
-        if (this.num_perf_lines < this.debug_max_perf_lines) {
+        if (this.debug_show_perf_lines > 0) {
             console.log(`[${(performance.now()/1000).toFixed(3)} s] ${msg}`)
-            this.num_perf_lines += 1
+            this.debug_show_perf_lines -= 1
         }
     }
 
@@ -61,8 +61,9 @@ class Main
                 this.scene_timer.advance_pause_time(1/60)
             }
         }
-        if (e.key == "z") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
-        if (e.key == "x") { this.debug_show_histogram_next_frame = true }
+        if (e.key == "a") { this.scene.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+        if (e.key == "h") { this.debug_show_histogram_next_frame = true }
+        if (e.key == "p") { this.debug_show_perf_lines = 5000 }
     }
 
     on_double_click(event: Event) {
@@ -358,7 +359,7 @@ const init_webgpu = async (main: Main) => {
                 main.log_perf(`got results back and mapped`);
                 perf_compute_results_mapped = performance.now()
                 const result = new Uint32Array(misc_buffer_cpu.getMappedRange());
-                main.log_perf(`histogram ${scene.get_histogram(result)}`);
+                console.log(`histogram ${scene.get_histogram(result)}`);
                 main.debug_show_histogram_next_frame = false;
                 misc_buffer_cpu.unmap()
             })
