@@ -75,6 +75,8 @@ export class DebugScene3 implements Scene
                           new Vector3(0.707, 0.707, 0.0))
         draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(0,1,0.5,0), flags,
                           new Vector3(-0.707, 0.707, 0.0))
+        draw_test_dot(engine, new Vector2(0.5,0.3), 0.01, new Color4(1,0,1.0,0), flags,
+                          new Vector3(0.2, 1.0, 0.0))
     }
 }
 

@@ -45,26 +45,28 @@ fn rough_main(
 
     // Calculate physics and update world coordinates
     var world_position = shape.world_position;
-    var explosion_distance_x = 0.0;
+    var shape_velocity = shape.world_velocity;
+
+    // First, we apply rotation to the velocity
+    if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
+        let unit_rotation_x = sin(elapsed_secs * 4.0);
+        let unit_rotation_y = cos(elapsed_secs * 0.7);
+        shape_velocity.x *= unit_rotation_x / SCREEN_ASPECT;
+        shape_velocity.y *= unit_rotation_y;
+    }
+
+    // Now apply movement from the velocity
     if ((shape.flags & SHAPE_FLAG_EXPLODE) != 0) {
-        explosion_distance_x = get_total_explosion_distance(elapsed_secs, shape.world_velocity.x);
-        world_position.x += explosion_distance_x;
-        world_position.y += get_total_explosion_distance(elapsed_secs, shape.world_velocity.y);
+        world_position.x += get_total_explosion_distance(elapsed_secs, shape_velocity.x);
+        world_position.y += get_total_explosion_distance(elapsed_secs, shape_velocity.y);
+    } else {
+        world_position += shape_velocity / 10;
     }
 
     if ((shape.flags & SHAPE_FLAG_GRAVITY) != 0) {
         world_position.y += get_total_gravity_distance(elapsed_secs);
     }
 
-    if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
-        var angle = acos(shape.world_velocity.x) + elapsed_secs*3.0;
-        var scale = 0.1;
-        if (explosion_distance_x != 0.0) {
-           // scale = explosion_distance_x * 0.1;
-        }
-        world_position.x += cos(angle) * scale / (SCREEN_ASPECT);
-        world_position.y += sin(angle) * scale;
-    }
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.

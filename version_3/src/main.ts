@@ -29,6 +29,7 @@ class Main
 
     constructor() {
         this.engine = new Engine()
+        this.engine.scene_number = 3
         this.scene_timer = new SceneTimer()
         this.fps_monitor = new FPSMonitor()
 
