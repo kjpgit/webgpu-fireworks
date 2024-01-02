@@ -146,12 +146,6 @@ const init_webgpu = async (main: Main) => {
     const bin_module = device.createShaderModule({
         label: 'bin_module', code: BinCode,
     });
-    const bin2_module = device.createShaderModule({
-        label: 'bin2_module', code: BinCode,
-    });
-    const bin3_module = device.createShaderModule({
-        label: 'bin3_module', code: BinCode,
-    });
     const fine_module = device.createShaderModule({
         label: 'fine_module', code: RasterizeCode,
     });
@@ -166,6 +160,12 @@ const init_webgpu = async (main: Main) => {
     });
     const bin_pipeline = device.createComputePipeline({
         layout: 'auto', compute: { module: bin_module, entryPoint: 'bin_main', },
+    });
+    const bin2_pipeline = device.createComputePipeline({
+        layout: 'auto', compute: { module: bin_module, entryPoint: 'bin2_main', },
+    });
+    const bin3_pipeline = device.createComputePipeline({
+        layout: 'auto', compute: { module: bin_module, entryPoint: 'bin3_main', },
     });
     const fine_pipeline = device.createComputePipeline({
         layout: 'auto', compute: { module: fine_module, entryPoint: 'fine_main', },
@@ -199,7 +199,7 @@ const init_webgpu = async (main: Main) => {
 
     const misc_buffer_gpu = device.createBuffer({
         label: "misc_buffer_gpu",
-        size: constants.MISC_BUFFER_SIZE,
+        size: Math.max(constants.MISC_BUFFER_SIZE, 256000),
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
     });
 
@@ -231,7 +231,6 @@ const init_webgpu = async (main: Main) => {
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: rough_buffer_gpu  } },
             { binding: 3, resource: { buffer: fine_buffer_gpu } },
-            //{ binding: 4, resource: { buffer: output_texture_gpu } },
         ],
     });
 
@@ -239,7 +238,23 @@ const init_webgpu = async (main: Main) => {
         label: "bin_bg",
         layout: bin_pipeline.getBindGroupLayout(0),
         entries: [
-            //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
+            { binding: 1, resource: { buffer: misc_buffer_gpu } },
+            { binding: 2, resource: { buffer: fine_buffer_gpu } },
+        ],
+    });
+
+    const bin2_bg = device.createBindGroup({
+        label: "bin2_bg",
+        layout: bin2_pipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 1, resource: { buffer: misc_buffer_gpu } },
+        ],
+    });
+
+    const bin3_bg = device.createBindGroup({
+        label: "bin3_bg",
+        layout: bin3_pipeline.getBindGroupLayout(0),
+        entries: [
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
         ],
@@ -249,7 +264,6 @@ const init_webgpu = async (main: Main) => {
         label: "fine_bg",
         layout: fine_pipeline.getBindGroupLayout(0),
         entries: [
-            //{ binding: 0, resource: { buffer: uniform_buffer_gpu } },
             { binding: 1, resource: { buffer: misc_buffer_gpu } },
             { binding: 2, resource: { buffer: fine_buffer_gpu } },
             { binding: 3, resource: { buffer: output_texture_gpu } },
@@ -315,16 +329,22 @@ const init_webgpu = async (main: Main) => {
         if (scene.num_shapes() > 0) {
             computePass.setPipeline(bin_pipeline);
             computePass.setBindGroup(0, bin_bg)
-            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes()/constants.WG_BIN_WORKLOAD))
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes() / constants.WG_BIN_WORKLOAD))
+
+            computePass.setPipeline(bin2_pipeline);
+            computePass.setBindGroup(0, bin2_bg)
+            computePass.dispatchWorkgroups(Math.ceil(constants.NUM_TILES_TOTAL / constants.WG_BIN2_WORKLOAD))
+
+            computePass.setPipeline(bin3_pipeline);
+            computePass.setBindGroup(0, bin3_bg)
+            computePass.dispatchWorkgroups(Math.ceil(scene.num_shapes() / constants.WG_BIN_WORKLOAD))
         }
 
         // Rasterization pass
         if (true) {
             computePass.setPipeline(fine_pipeline);
             computePass.setBindGroup(0, fine_bg)
-            const dispatch_x = Math.ceil(constants.SCREEN_WIDTH_PX / constants.WG_RASTER_PIXELS_X)
-            const dispatch_y = Math.ceil(constants.SCREEN_HEIGHT_PX / constants.WG_RASTER_PIXELS_Y)
-            computePass.dispatchWorkgroups(dispatch_x, dispatch_y, 14*5);
+            computePass.dispatchWorkgroups(constants.NUM_TILES_TOTAL)
         }
 
         computePass.end();

@@ -248,12 +248,12 @@ export class Scene
 
     // Shows our tile layout
     draw_test_page2() {
-        for (var x = 0; x < constants.TILES_X; x++) {
-            for (var y = 0; y < constants.TILES_Y; y++) {
+        for (var x = 0; x < constants.NUM_TILES_X; x++) {
+            for (var y = 0; y < constants.NUM_TILES_Y; y++) {
                 // If only we could draw a line :)
                 // Draw corners for now
-                let wx = (x + 0.0) / constants.TILES_X
-                let wy = (y + 0.0) / constants.TILES_Y
+                let wx = (x + 0.0) / constants.NUM_TILES_X
+                let wy = (y + 0.0) / constants.NUM_TILES_Y
                 let color = new Color4(0.0, 0.0, 0.0, 0.0);
                 color.b = 1;
                 this.draw_test_dot(new Vector2(wx, wy), 0.0010, color)

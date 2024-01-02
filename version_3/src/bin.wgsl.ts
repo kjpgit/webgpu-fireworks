@@ -38,7 +38,7 @@ fn bin_main(
 
 
 @compute @workgroup_size(WG_BIN2_WORKLOAD)
-fn bin_main2(
+fn bin2_main(
     @builtin(workgroup_id) workgroup_id : vec3<u32>,
     @builtin(local_invocation_id) local_invocation_id : vec3<u32>,
 )
@@ -70,7 +70,7 @@ fn bin_main2(
 
 
 @compute @workgroup_size(WG_THREADS_X)
-fn bin_main3(
+fn bin3_main(
     @builtin(workgroup_id) workgroup_id : vec3<u32>,
     @builtin(local_invocation_id) local_invocation_id : vec3<u32>,
 )
