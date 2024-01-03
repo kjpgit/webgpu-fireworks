@@ -60,26 +60,19 @@ export function smoothstep(min:number, max:number, value:number) {
     return x * x * (3 - 2*x);
 }
 
-export function badRandomUniformUnitVector3D(): Vector3 {
-    const angle = random_range([0.0, 2.0 * PI])
-    const r = Math.sqrt(my_random())
-    //const r = my_random()
-    var hemisphere = 1.0;
-    if (my_random() < 0.5) {
-        hemisphere = -1.0;
-    }
-    const z = Math.sqrt(1.0 - r*r) * hemisphere
-    return new Vector3(r * Math.cos(angle), r * Math.sin(angle), z)
-}
 
 export function RandomUniformUnitVector3D(): Vector3 {
+    // Rotation around equator
     let phi = random_range([0.0, 2.0 * PI])
-    let costheta = random_range([-1,1])
 
-    let theta = Math.acos( costheta )
-    let x = Math.sin( theta) * Math.cos( phi )
-    let y = Math.sin( theta) * Math.sin( phi )
-    let z = Math.cos( theta )
+    // The z-value of a point on the unit sphere is
+    // uniformly distributed between −1 and 1
+    let height = random_range([-1,1])
+
+    let theta = Math.acos(height)
+    let x = Math.sin(theta) * Math.cos(phi)
+    let y = Math.sin(theta) * Math.sin(phi)
+    let z = Math.cos(theta)
     return new Vector3(x,y,z)
 
 }

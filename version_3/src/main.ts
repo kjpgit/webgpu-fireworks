@@ -12,7 +12,7 @@ import { FragmentCode } from "./shaders/quad.wgsl.js"
 class Main
 {
     /* Troubleshooting */
-    debug_start_paused = true
+    debug_start_paused = false
     debug_max_frames = -1
     debug_max_perf_lines = 10000
     debug_show_histogram_next_frame = false
@@ -29,7 +29,7 @@ class Main
 
     constructor() {
         this.engine = new Engine()
-        this.engine.scene_number = 3
+        this.engine.scene_number = 0
         this.scene_timer = new SceneTimer()
         this.fps_monitor = new FPSMonitor()
 
@@ -55,15 +55,18 @@ class Main
         else if (e.key == " ") { this.scene_timer.toggle_pause() }
         else if (e.key == "j") {
             if (this.scene_timer.is_paused()) {
-                this.scene_timer.advance_pause_time(-1/60)
-            }
-        }
-        else if (e.key == "k") {
-            if (this.scene_timer.is_paused()) {
                 this.scene_timer.advance_pause_time(1/60)
+            } else {
+                this.scene_timer.toggle_pause();
+            }
+        } else if (e.key == "k") {
+            if (this.scene_timer.is_paused()) {
+                this.scene_timer.advance_pause_time(-1/60)
+            } else {
+                this.scene_timer.toggle_pause();
             }
         }
-        else if (e.key == "a") { this.engine.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
+        else if (e.key == "t") { this.engine.toggle_debug(constants.DEBUG_SHOW_ACTIVE_TILES) }
         else if (e.key == "s") { this.engine.toggle_debug(constants.DEBUG_NO_SMOOTHSTEP) }
         else if (e.key == "h") { this.debug_show_histogram_next_frame = true }
         else if (e.key == "p") { this.debug_show_perf_lines = 5000 }

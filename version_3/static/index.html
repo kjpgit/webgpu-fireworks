@@ -33,6 +33,8 @@
       div.center {
         display: flex;
         justify-content: center;
+        xxalign-content: flex-end;
+        align-items: center;
       }
       div.canvas-wrapper {
         border: 3px solid black;
@@ -50,10 +52,21 @@
         font-size: 16px;
         background-color: black;
         color: silver;
-        margin: 0 auto;
         margin-top: 20px;
         padding: 10px;
         text-align: center;
+      }
+      div.remote {
+        display: flex;
+        font-family: ShareTechMono;
+        width: 300px;
+        font-size: 16px;
+        background-color: black;
+        color: silver;
+        margin-top: 20px;
+        margin-left: 100px;
+        padding: 10px;
+        text-align: left;
       }
     </style>
   </head>
@@ -68,9 +81,17 @@
       </div>
     </div>
 
-    <div class=stand>
-      <div>Galaxy Engine</div>
-      <div>by Karl Pickett</div>
+
+    <div class=center>
+      <div></div>
+      <div class=stand>
+        <div>Galaxy Engine</div>
+        <div>by Karl Pickett</div>
+      </div>
+      <div class=remote class=>
+        <div>Keys:&nbsp;</div>
+        <div>1-4 t s &lt;space&gt; j k</div>
+      </div>
     </div>
 
     <script type="module" src="main.js"></script>
