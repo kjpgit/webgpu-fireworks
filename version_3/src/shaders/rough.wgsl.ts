@@ -49,18 +49,19 @@ fn rough_main(
 
     // First, we apply rotation to the velocity
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
-        let strength = length(shape_velocity);
-        let angle = elapsed_secs / 2.0; // * (strength);
-        //shape_velocity = rotate_vector_x(shape_velocity, 0.785).xyz;
+        let strength = length(shape_velocity) + 1.0;
+        let angle = elapsed_secs * 4/ (strength*strength);
+        // Order matters here.
         shape_velocity = rotate_vector_y(shape_velocity, angle).xyz;
-        shape_velocity *= 0.7;
+        shape_velocity = rotate_vector_x(shape_velocity, 0.785*1.0).xyz;
+        shape_velocity *= 0.2;
     }
 
     // Now apply movement from the velocity
     if ((shape.flags & SHAPE_FLAG_EXPLODE) != 0) {
         let explosion_force = get_total_explosion_distance(elapsed_secs, 1.0);
         shape_velocity.x /= SCREEN_ASPECT;
-        shape_velocity *= 0.5 * min(explosion_force, 0.2);
+        shape_velocity *= 0.5 * min(explosion_force, 0.5);
         world_position += shape_velocity;
     } else {
         shape_velocity.x /= SCREEN_ASPECT;
