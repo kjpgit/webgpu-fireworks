@@ -90,7 +90,7 @@ fn rough_main(
     let view_y = SCREEN_HEIGHT_PX - (world_position.y * SCREEN_HEIGHT_PX);
     let view_size_x = world_size * SCREEN_WIDTH_PX;
 
-    let color_ratio = 1 - smoothstep(0.0, shape.duration_secs, elapsed_secs);
+    let color_ratio = 2.5 - smoothstep(0.0, shape.duration_secs, elapsed_secs);
 
     // Append to fine shape array
     let shape_index = atomicAdd(&g_misc.num_fine_shapes, 1);

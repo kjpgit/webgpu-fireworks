@@ -114,7 +114,7 @@ fn fine_main(
                     let pdistance = length(rough_dist);
                     var ratio: f32;
                     if ((g_uniform.debug_flags & DEBUG_NO_SMOOTHSTEP) == 0) {
-                        ratio = 1.0 - smoothstep(0.0, shape_size, pdistance);
+                        ratio = 1.0 - smoothstep(0.0, shape_size+.50, pdistance);
                     } else {
                         ratio = 1.0 - step(shape_size, pdistance);
                     }
