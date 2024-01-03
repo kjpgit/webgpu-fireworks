@@ -49,8 +49,9 @@ fn rough_main(
 
     // First, we apply rotation to the velocity
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
-        let angle = elapsed_secs / 2.0;
-        shape_velocity = rotate_vector_x(shape_velocity, 0.785).xyz;
+        let strength = length(shape_velocity);
+        let angle = elapsed_secs / 2.0; // * (strength);
+        //shape_velocity = rotate_vector_x(shape_velocity, 0.785).xyz;
         shape_velocity = rotate_vector_y(shape_velocity, angle).xyz;
         shape_velocity *= 0.7;
     }
@@ -59,7 +60,7 @@ fn rough_main(
     if ((shape.flags & SHAPE_FLAG_EXPLODE) != 0) {
         let explosion_force = get_total_explosion_distance(elapsed_secs, 1.0);
         shape_velocity.x /= SCREEN_ASPECT;
-        shape_velocity *= 0.5 * explosion_force;
+        shape_velocity *= 0.5 * min(explosion_force, 0.2);
         world_position += shape_velocity;
     } else {
         shape_velocity.x /= SCREEN_ASPECT;
@@ -73,7 +74,7 @@ fn rough_main(
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.
-    let world_size = shape.world_size * shape_velocity.z*2;
+    let world_size = shape.world_size; // * shape_velocity.z*1.4;
 
     // Remove any shape that has any dimension out of the world space
     if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {

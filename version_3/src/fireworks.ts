@@ -5,7 +5,7 @@ import { type Scene, Engine } from "./engine.js";
 import { Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
-const NUM_FLARES = 9000
+const NUM_FLARES = 3000
 const MAX_FIREWORKS = 2
 const HOLD_FIREWORK = 1
 
@@ -16,6 +16,7 @@ const LAUNCH_RANGE_Y = [0.5, 0.5]
 const FLARE_DURATION_RANGE = [40.0, 50.0]
 const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
+const FLARE_VELOCITY_VARIANCE_RANGE = [1.0, 10.5]
 
 const GRAVITY = -0.04
 
@@ -78,11 +79,10 @@ class Firework {
         let orig_color = get_random_color()
         for (let i = 0; i < num_flares; i++) {
             let velocity = RandomUniformUnitVector3D()
-            let speed_variance = random_range([0.5, 2.4]);
-            //let speed_variance = 1.0;
-            velocity.x *= speed_variance;
-            velocity.y *= speed_variance;
-            velocity.z *= speed_variance;
+            let velocity_variance = random_range(FLARE_VELOCITY_VARIANCE_RANGE)
+            velocity.x *= velocity_variance;
+            velocity.y *= velocity_variance;
+            velocity.z *= velocity_variance;
 
             // color variance
             let color = orig_color.clone()
