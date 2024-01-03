@@ -77,8 +77,8 @@ fn rough_main(
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.
-    let world_size = shape.world_size;
-    //let world_size = shape.world_size * shape_velocity.z*1.2;
+    //let world_size = shape.world_size;
+    let world_size = shape.world_size * (1-world_position.z)*1.4;
 
     // Remove any shape that has any dimension out of the world space
     if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {

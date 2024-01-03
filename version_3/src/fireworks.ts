@@ -5,7 +5,7 @@ import { type Scene, Engine } from "./engine.js";
 import { Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
-const NUM_FLARES = 4000
+const NUM_FLARES = 9000
 const MAX_FIREWORKS = 2
 const HOLD_FIREWORK = 0
 
