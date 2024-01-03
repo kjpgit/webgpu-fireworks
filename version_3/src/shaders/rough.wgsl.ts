@@ -50,7 +50,9 @@ fn rough_main(
     // First, we apply rotation to the velocity
     if ((shape.flags & SHAPE_FLAG_ROTATE) != 0) {
         let strength = length(shape_velocity) + 1.0;
-        let angle = elapsed_secs * 4/ (strength*strength);
+        //let angle = pow(elapsed_secs, 1.2) * 1/ pow(strength, 1.2);
+        let angle = pow(elapsed_secs, 4) / 10000 + .5;
+
         // Order matters here.
         shape_velocity = rotate_vector_y(shape_velocity, angle).xyz;
         shape_velocity = rotate_vector_x(shape_velocity, 0.785*1.0).xyz;
@@ -61,7 +63,7 @@ fn rough_main(
     if ((shape.flags & SHAPE_FLAG_EXPLODE) != 0) {
         let explosion_force = get_total_explosion_distance(elapsed_secs, 1.0);
         shape_velocity.x /= SCREEN_ASPECT;
-        shape_velocity *= 0.5 * min(explosion_force, 0.5);
+        shape_velocity *= 0.5 * explosion_force;
         world_position += shape_velocity;
     } else {
         shape_velocity.x /= SCREEN_ASPECT;
@@ -75,7 +77,8 @@ fn rough_main(
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.
-    let world_size = shape.world_size; // * shape_velocity.z*1.4;
+    let world_size = shape.world_size;
+    //let world_size = shape.world_size * shape_velocity.z*1.2;
 
     // Remove any shape that has any dimension out of the world space
     if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {
@@ -108,8 +111,13 @@ fn rough_main(
 // todo: add variance (in the log2) for different surface area
 fn get_total_explosion_distance(elapsed_secs: f32, velocity: f32) -> f32
 {
-    let distance = log2(10 * elapsed_secs + 1);
-    return distance * velocity * 0.1;
+    if (elapsed_secs > 20.6) {
+        return 0;
+    }
+
+    let gravpull = 10 - pow(0.3 * elapsed_secs - 2, 2);
+    let explosion = log2(10 * elapsed_secs + 1);
+    return (gravpull + explosion) * velocity * 0.1;
 }
 
 
@@ -119,9 +127,9 @@ fn get_total_explosion_distance(elapsed_secs: f32, velocity: f32) -> f32
 fn get_total_gravity_distance(elapsed_secs: f32) -> f32
 {
     const GRAVITY = -0.04;
-    if (elapsed_secs > 1.0) {
+    if (elapsed_secs > 2.0) {
         // terminal velocity: derivative(slope) of x^2 is 2x
-        return GRAVITY * (2.0 * elapsed_secs - 1.0);
+        return GRAVITY * (4.0 * elapsed_secs - 1.0);
     } else {
         return GRAVITY * (elapsed_secs * elapsed_secs);
     }

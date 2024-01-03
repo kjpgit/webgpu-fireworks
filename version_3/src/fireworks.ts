@@ -7,13 +7,13 @@ import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
 const NUM_FLARES = 4000
 const MAX_FIREWORKS = 2
-const HOLD_FIREWORK = 1
+const HOLD_FIREWORK = 0
 
-const LAUNCH_TIME_RANGE = [50.0, 50.0]
+const LAUNCH_TIME_RANGE = [21.0, 21.0]
 const LAUNCH_RANGE_X = [0.5, 0.5]
 const LAUNCH_RANGE_Y = [0.5, 0.5]
 
-const FLARE_DURATION_RANGE = [40.0, 50.0]
+const FLARE_DURATION_RANGE = [21.0, 21.0]
 const FLARE_SIZE_RANGE = [0.001, 0.005]  // this is really a radius
 const FLARE_COLOR_VARIANCE_RANGE = [-0.3, 0.3]
 const FLARE_VELOCITY_VARIANCE_RANGE = [1.0, 10.5]
@@ -108,7 +108,7 @@ class Firework {
 export class FireworksScene implements Scene
 {
     private fireworks: Firework[] = new Array()
-    private next_launch = 0
+    private next_launch = 30/60
 
     constructor() { }
 
