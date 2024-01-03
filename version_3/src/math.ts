@@ -61,12 +61,17 @@ export function smoothstep(min:number, max:number, value:number) {
 }
 
 
+
+// https://www.rojtberg.net/1985/how-to-generate-random-points-on-a-sphere/
+// cart_range = -np.cos(angle) + 1 # maximal range in cartesian coords
+// z = 1 - np.random.rand() * cart_range
+// theta = np.arccos(z)
 export function RandomUniformUnitVector3D(): Vector3 {
     // Rotation around equator
     let phi = random_range([0.0, 2.0 * PI])
 
     // The z-value of a point on the unit sphere is
-    // uniformly distributed between −1 and 1
+    // uniformly distributed between −1 and 1 (cartesian coords only)
     let height = random_range([-1,1])
 
     let theta = Math.acos(height)
