@@ -30,10 +30,11 @@
         background: #222;
       }
       .hidden { display: none; }
+
+
       div.center {
         display: flex;
         justify-content: center;
-        xxalign-content: flex-end;
         align-items: center;
       }
       div.canvas-wrapper {
@@ -45,6 +46,16 @@
         display: block;
         margin: 0;
         max-width: 100%;
+      }
+
+
+      div.stand-center {
+        display: flex;
+        gap: 100px;
+        justify-content: center;
+        align-items: center;
+        margin-left: 300px;
+        margin-right: 300px;
       }
       div.stand {
         font-family: ShareTechMono;
@@ -64,9 +75,12 @@
         background-color: black;
         color: silver;
         margin-top: 20px;
-        margin-left: 100px;
         padding: 10px;
         text-align: left;
+      }
+      div.equal > div {
+        /* god why is flexbox so annoying */
+        flex: 1 1 0;
       }
     </style>
   </head>
@@ -81,8 +95,7 @@
       </div>
     </div>
 
-
-    <div class=center>
+    <div class="stand-center equal">
       <div></div>
       <div class=stand>
         <div>Galaxy Engine</div>
