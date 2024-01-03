@@ -52,7 +52,7 @@ fn rough_main(
         let angle = elapsed_secs / 2.0;
         shape_velocity = rotate_vector_x(shape_velocity, 0.785).xyz;
         shape_velocity = rotate_vector_y(shape_velocity, angle).xyz;
-        //shape_velocity *= 2;
+        shape_velocity *= 0.7;
     }
 
     // Now apply movement from the velocity
@@ -73,7 +73,7 @@ fn rough_main(
 
     // The size is a world size, so it scales independently to height and width
     // A world size of 1.0 is the entire screen, tall and wide.
-    let world_size = shape.world_size * shape_velocity.z;
+    let world_size = shape.world_size * shape_velocity.z*2;
 
     // Remove any shape that has any dimension out of the world space
     if (min(world_position.x + world_size, world_position.y + world_size) < 0.0) {

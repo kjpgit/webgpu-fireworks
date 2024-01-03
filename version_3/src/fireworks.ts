@@ -5,12 +5,13 @@ import { type Scene, Engine } from "./engine.js";
 import { Vector2, Vector3, Color4  } from "./util.js";
 import { RandomUniformUnitVector3D, smoothstep, random_range } from "./math.js";
 
-const NUM_FLARES = 5000
+const NUM_FLARES = 9000
 const MAX_FIREWORKS = 2
+const HOLD_FIREWORK = 1
 
 const LAUNCH_TIME_RANGE = [50.0, 50.0]
 const LAUNCH_RANGE_X = [0.5, 0.5]
-const LAUNCH_RANGE_Y = [0.6, 0.6]
+const LAUNCH_RANGE_Y = [0.5, 0.5]
 
 const FLARE_DURATION_RANGE = [40.0, 50.0]
 const FLARE_SIZE_RANGE = [0.005, 0.005]  // this is really a radius
@@ -91,7 +92,10 @@ class Firework {
             //color.a = random_range(0.7, 4.0)
 
             // other variance
-            const duration_secs = random_range(FLARE_DURATION_RANGE)
+            let duration_secs = 999999
+            if (!HOLD_FIREWORK) {
+                duration_secs = random_range(FLARE_DURATION_RANGE)
+            }
             const size = random_range(FLARE_SIZE_RANGE)
 
             let f = new Flare(velocity, size, color, duration_secs)
@@ -112,8 +116,10 @@ export class FireworksScene implements Scene
         // Auto launch
         let current_time = engine.current_time
         if (current_time > this.next_launch && this.fireworks.length >= 0) {
-            this.launch_firework(current_time)
-            this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
+            if (this.fireworks.length == 0 || !HOLD_FIREWORK) {
+                this.launch_firework(current_time)
+                this.next_launch = current_time + random_range(LAUNCH_TIME_RANGE)
+            }
         }
 
         for (const fw of this.fireworks) {
