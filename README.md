@@ -1,4 +1,4 @@
-# WebGPU Fireworks and Particle Demos
+# WebGPU Fireworks!
 
 * [Live Demo of version 1](https://karl-pickett.dev/fireworks/index.html) --
 Fireworks using a normal vertex/triangle/fragment pipeline
