@@ -7,3 +7,7 @@ Fireworks using a normal vertex/triangle/fragment pipeline
 Software particle rendering, which uses a compute shader!  (My first
 ever shader!)
 
+
+## Other Demos
+
+You should see my newer demo, [Galaxy Engine](https://github.com/kjpgit/webgpu-galaxy-engine)
